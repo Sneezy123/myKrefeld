@@ -1,0 +1,27 @@
+{
+  "name": "mykrefeld",
+  "version": "1.0.0",
+  "description": "Deine App für Krefeld",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sneezy123/myKrefeld.git"
+  },
+  "author": "Nils Müller",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sneezy123/myKrefeld/issues"
+  },
+  "homepage": "https://github.com/Sneezy123/myKrefeld#readme",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongoose": "^8.13.2",
+    "node-cron": "^3.0.3"
+  },
+  "type": "module"
+}

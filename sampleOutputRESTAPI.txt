@@ -1,0 +1,120 @@
+[
+    {
+      id: 72742,
+      global_id: 'veranstaltung.krefeld651.de?id=72742',
+      global_id_lineage: [ 'veranstaltung.krefeld651.de?id=72742' ],
+      author: '1',
+      status: 'publish',
+      date: '2025-03-20 12:18:49',
+      date_utc: '2025-03-20 11:18:49',
+      modified: '2025-03-20 12:18:49',
+      modified_utc: '2025-03-20 11:18:49',
+      url: 'https://veranstaltung.krefeld651.de/event/26-gruener-salon-mit-jens-siegert-wohin-treibt-russland/',
+      rest_url: 'https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events/72742',
+      title: '26. Grüner Salon &#8211; Mit Jens Siegert &#8211; Wohin treibt Russland?',
+      description: '<p>Einlass 19:00 Uhr &#8211; Eintritt frei</p>\n' +
+        '<p>Das Buch von Jens Siegert (zeigt) die seltene Kombination eines Blicks auf die russische Gesellschaft von innen, wobei er es schafft, gleichzeitig ein ehrlicher und objektiver Beobachter zu bleiben!” Irina Scherbakowa, Memorial.</p>\n' +
+        '<p>Kann Putins Ende einen demokratischen Wandel für Russland bedeuten? Putin führt Krieg gegen die Ukraine und greift unsere Demokratie an. Russische Dissidenten und Oppositionelle verlieren ihre Arbeit, ihre Freiheit oder ihr Leben. Doch eines Tages wird es ein Russland nach Putin geben. Jens Siegert zeigt verschiedene Szenarien auf, wie sich die russische Politik und Gesellschaft entwickeln könnten und was dies für den demokratischen Westen bedeutet.</p>\n' +
+        '<p>Der Autor unternimmt einen Versuche die  russische Geschichte und Gegenwart besser zu verstehen: Dies geschieht durch eine fundierte Analyse des politischen Systems Russland, seiner Auffassung von Demokratie und der Rolle des Westens. Ebenso wie die traditionelle Spaltung in Volk und Macht. Er erklärt wie die patriarchale Zivilgesellschaft und die machtvolle orthodoxe Kirche Russland prägen. Letztlich fragen wir uns, ob Putin unser Verhältnis zu Russland über sein Ende hinaus zerstören wird?</p>\n' +
+        '<p><img decoding="async" src="https://werkhaus-krefeld.de/wp-content/uploads/2025/03/D_817_1.jpg" alt="Jens Siegert" /></p>\n' +
+        '<p>Unser Gast: Jens Siegert, geb. 1960 in Salzgitter, Politikwissenschaftler, Publizist lebt seit 1993 in Moskau. Er leitete am Moskauer Goethe-Institut das EU-Projekt Public Diplomacy. EU and Russia. Zuvor war er von 1999 bis Mitte 2015 Chef des Länderbüros Russland der Heinrich-Böll-Stiftung zuständig. 2021 erschien sein Buch “Im Prinzip Russland”.</p>\n' +
+        '<p>Moderation: Harry von Bargen</p>\n' +
+        '<p>Die Veranstaltung ist kostenfrei. Eine Anmeldung ist nicht notwendig.</p>\n' +
+        '<p><strong>Mittwoch, den 23. April 2025 um 19.30 Uhr im Südbahnhof, Saumstraße 9</strong></p>\n' +
+        '<p><em>Diskussion erwünscht.</em></p>',
+      excerpt: '',
+      slug: '26-gruener-salon-mit-jens-siegert-wohin-treibt-russland',
+      image: {
+        url: 'https://veranstaltung.krefeld651.de/wp-content/uploads/2025/03/Jens-Siegert-Wohin-treibt-Russland-K_819_1-quer-scaled.jpg',
+        id: 72751,
+        extension: 'jpg',
+        width: 2560,
+        height: 1006,
+        filesize: 123803,
+        sizes: [Object],
+        original_image: 'Jens-Siegert-Wohin-treibt-Russland-K_819_1-quer.jpg'
+      },
+      all_day: false,
+      start_date: '2025-04-23 19:30:00',
+      start_date_details: {
+        year: '2025',
+        month: '04',
+        day: '23',
+        hour: '19',
+        minutes: '30',
+        seconds: '00'
+      },
+      end_date: '2025-04-23 21:30:00',
+      end_date_details: {
+        year: '2025',
+        month: '04',
+        day: '23',
+        hour: '21',
+        minutes: '30',
+        seconds: '00'
+      },
+      utc_start_date: '2025-04-23 17:30:00',
+      utc_start_date_details: {
+        year: '2025',
+        month: '04',
+        day: '23',
+        hour: '17',
+        minutes: '30',
+        seconds: '00'
+      },
+      utc_end_date: '2025-04-23 19:30:00',
+      utc_end_date_details: {
+        year: '2025',
+        month: '04',
+        day: '23',
+        hour: '19',
+        minutes: '30',
+        seconds: '00'
+      },
+      timezone: 'Europe/Berlin',
+      timezone_abbr: 'CEST',
+      cost: 'Free',
+      cost_details: {
+        currency_symbol: '€',
+        currency_code: 'DEU',
+        currency_position: 'suffix',
+        values: [Array]
+      },
+      website: 'https://werkhaus-krefeld.de/26-gruener-salon/',
+      show_map: true,
+      show_map_link: true,
+      hide_from_listings: false,
+      sticky: false,
+      featured: false,
+      categories: [],
+      tags: [],
+      venue: {
+        id: 21376,
+        author: '1',
+        status: 'publish',
+        date: '2023-01-26 16:57:04',
+        date_utc: '2023-01-26 15:57:04',
+        modified: '2023-01-26 16:57:04',
+        modified_utc: '2023-01-26 15:57:04',
+        url: 'https://veranstaltung.krefeld651.de/veranstaltungsort/suedbahnhof-2/',
+        venue: 'Südbahnhof',
+        slug: 'suedbahnhof-2',
+        address: 'Saumstr, 9',
+        city: 'Krefeld',
+        country: 'Deutschland',
+        province: 'NRW',
+        zip: '47805',
+        phone: '0215301812',
+        website: 'https://werkhaus-krefeld.de',
+        stateprovince: 'NRW',
+        show_map: false,
+        show_map_link: false,
+        global_id: 'veranstaltung.krefeld651.de?id=21376',
+        global_id_lineage: [Array]
+      },
+      organizer: [ [Object] ],
+      is_virtual: false,
+      virtual_url: null,
+      virtual_video_source: ''
+    }
+  ]
