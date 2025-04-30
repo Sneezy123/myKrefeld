@@ -1,7 +1,6 @@
 import './App.css';
 import Map from '../pages/map/Map.jsx';
 import Discover from '../pages/discover/Discover.jsx';
-import Description from '../pages/description/Description.jsx';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ReactDOM from 'react-dom/client';
 import { Outlet, Link } from 'react-router-dom';
