@@ -1,26 +1,126 @@
 import { useState, useRef, useEffect } from 'react';
+import debounce from 'lodash.debounce';
+import '../../app/App.css';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
+import { faClock, faStar } from '@fortawesome/free-regular-svg-icons';
+import {
+    faCoins,
+    faPlus,
+    faLocationDot,
+    faChildren,
+} from '@fortawesome/free-solid-svg-icons';
 
 export default function Discover({ events }) {
+    // State to track which card is flipped
     const [flippedCardId, setFlippedCardId] = useState(null);
-    const [frontHeights, setFrontHeights] = useState({}); // Store heights for each card
-    const frontRefs = useRef({}); // Refs for each card's front
+    // State to store heights for each card's front
+    const [frontHeights, setFrontHeights] = useState({});
+    // Refs for each card's front
+    const frontRefs = useRef({});
 
+    // Add new state for filtered events and active filter
+    const [filteredEvents, setFilteredEvents] = useState(events);
+    const [activeFilter, setActiveFilter] = useState(null);
+
+    // Filter texts and their corresponding icons
+    const filterTexts = [
+        'Anstehend',
+        'Kostenlos',
+        'Beliebt',
+        'Neu',
+        'In der Nähe',
+        'Familienfreundlich',
+    ];
+    const filterSymbols = [
+        faClock, // Represents time-related filters
+        faCoins, // Represents cost-related filters
+        faStar, // Represents popular events
+        faPlus, // Represents new events
+        faLocationDot, // Represents nearby events
+        faChildren, // Represents family-friendly events
+    ];
+
+    // Function to handle filtering events
+    const filterEvents = (filterId) => {
+        console.log(`Filtering events for: ${filterId}`);
+
+        if (activeFilter == filterId) {
+            // Reset active filter
+            setActiveFilter(null);
+            setFilteredEvents(events);
+            return;
+        }
+
+        setActiveFilter(filterId);
+
+        // Your filtering logic here
+        if (filterId === 0) {
+            // Filter events based on their start date
+            setFilteredEvents(
+                events.filter(
+                    (event) =>
+                        new Date(event.start_date).getTime() >
+                        new Date(Date.now()).getTime()
+                )
+            );
+        } else if (filterId === 1) {
+            // Filter events based on their cost
+        } else if (filterId === 2) {
+            // Filter events based on their popularity
+        } else if (filterId === 3) {
+            // Filter events based on their newness
+        } else if (filterId === 4) {
+            // Filter events based on their proximity
+        } else if (filterId === 5) {
+            // Filter events based on their family-friendliness
+        }
+    };
+
+    // Function to handle flipping a card
     const handleFlip = (id) => {
         setFlippedCardId(flippedCardId === id ? null : id); // Toggle flip state
     };
 
+    /* -------------------------------- useEffect ------------------------------- */
+
     useEffect(() => {
-        // Measure the height of each front card
-        const heights = {};
-        Object.keys(frontRefs.current).forEach((id) => {
-            const front = frontRefs.current[id];
-            if (front) {
-                heights[id] = front.offsetHeight;
-            }
-        });
-        setFrontHeights(heights);
+        // Function to update the heights of card fronts
+        const updateHeights = () => {
+            const heights = {};
+            Object.keys(frontRefs.current).forEach((id) => {
+                const front = frontRefs.current[id];
+                if (front) {
+                    heights[id] = front.offsetHeight;
+                }
+            });
+            setFrontHeights(heights);
+        };
+
+        // Debounced version of the updateHeights function
+        const debouncedUpdateHeights = debounce(updateHeights, 200);
+
+        // Initial calculation of heights
+        updateHeights();
+
+        // Add resize event listener to update heights on window resize
+        window.addEventListener('resize', debouncedUpdateHeights);
+
+        // Cleanup event listener on component unmount
+        return () => {
+            window.removeEventListener('resize', debouncedUpdateHeights);
+        };
     }, [events]);
 
+    // Update filteredEvents when the original events prop changes
+    useEffect(() => {
+        setFilteredEvents(events);
+    }, [events]);
+
+    /* -------------------------------- useEffects End ------------------------------- */
+
+    // Render a loading state if no events are available
     if (!events || events.length === 0) {
         return (
             <div className='flex flex-col size-full justify-center items-center gap-y-3'>
@@ -38,86 +138,276 @@ export default function Discover({ events }) {
         );
     }
 
-            {/* Back of the Card */}
-            <div
-              className={`w-full backface-hidden ${
-                flippedCardId === event.id ? "block" : "hidden"
-              }   overflow-y-scroll scrollbar-fade flex flex-col`}
-              style={{
-                height: frontHeights[event.id] || "1rem", // Dynamically set height
-              }}
-            >
-              <div className="flex-grow">
-                <p
-                  className="text-sm text-gray-700 font-stretch-semi-expanded mb-4 description break-words overflow-x-hidden"
-                  dangerouslySetInnerHTML={{
-                    __html: event.description,
-                  }}
-                ></p>
-              </div>
-              <div className="w-full sticky bottom-0 bg-white pt-1 left-0">
-                <button
-                  onClick={() => handleFlip(event.id)}
-                  className="text-indigo-500 hover:underline"
-                >
-                  Zurück
-                </button>
-              </div>
+    // Render the main content
+    return (
+        <div className='bg-white p-4 w-full'>
+            <h1 className='font-stretch-semi-expandedd text-4xl ml-3 lg:ml-15'>
+                Entdecke aktuelle Veranstaltungen
+            </h1>
+            <h2 className='font-stretch-semi-expanded text-lg ml-3 lg:ml-15 text-stone-400 font-light'>
+                Krefeld und Umgebung
+            </h2>
+            <div className='h-full p-3 mx-0 lg:mx-12 my-2 flex flex-row max-w-full overflow-x-scroll scrollbar-fade'>
+                {filterTexts.map((text, index) => {
+                    const symbol = filterSymbols[index];
+                    return (
+                        <FilterCard
+                            key={index}
+                            symbol={symbol}
+                            text={text}
+                            id={index}
+                            isActive={activeFilter === index}
+                            filterEvents={filterEvents}
+                        />
+                    );
+                })}
             </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+            <ul className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mx-15 mx-3 lg:my-5 my-3 max-w-full transition-all'>
+                {filteredEvents.map((event) => (
+                    <li
+                        key={event.id}
+                        className={`relative rounded-3xl border p-6 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow ${
+                            flippedCardId === event.id ? 'flipped' : ''
+                        } min-h-[400px] flex flex-col`} // Set a minimum height and use flex column
+                    >
+                        {/* Front of the Card */}
+                        <div
+                            ref={(el) => (frontRefs.current[event.id] = el)}
+                            className={`w-full backface-hidden ${
+                                flippedCardId === event.id
+                                    ? 'hidden'
+                                    : 'flex flex-col h-full'
+                            }`}
+                        >
+                            {/* Main content area - takes all available space but shrinks as needed */}
+                            <div className='flex-1'>
+                                {event.image?.url !== '' ? (
+                                    <img
+                                        src={event.image.url}
+                                        alt={event.title}
+                                        className='rounded-2xl mb-4 w-full h-40 object-cover'
+                                    />
+                                ) : (
+                                    <div className='rounded-2xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
+                                )}
+
+                                {/* Event Title */}
+                                <h2
+                                    className='font-stretch-semi-expanded font-semibold mb-2 text-xl'
+                                    dangerouslySetInnerHTML={{
+                                        __html: event.title,
+                                    }}
+                                ></h2>
+
+                                <TimeIndicator
+                                    eventStart={new Date(
+                                        event.start_date
+                                    ).getTime()}
+                                    eventEnd={new Date(
+                                        event.end_date
+                                    ).getTime()}
+                                />
+
+                                {/* Event Details */}
+                                <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-2'>
+                                    <strong>Beginn:</strong>{' '}
+                                    {new Date(
+                                        event.start_date
+                                    ).toLocaleString()}{' '}
+                                    <br />
+                                    <strong>Ende:</strong>{' '}
+                                    {new Date(event.end_date).toLocaleString()}
+                                </p>
+
+                                {/* Venue */}
+                                {event.venue?.venue !== '' && (
+                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                        <strong>Veranstaltungsort:</strong>{' '}
+                                        {event.venue?.venue}:{' '}
+                                        <span className='font-light'>
+                                            {event.venue?.address},{' '}
+                                            {event.venue?.zip}{' '}
+                                            {event.venue?.city}
+                                        </span>
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Button area - explicitly positioned at the bottom */}
+                            <div className='mt-auto pt-3'>
+                                <a
+                                    href={
+                                        event.website === ''
+                                            ? event.url
+                                            : event.website
+                                    }
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className='font-stretch-semi-expanded text-indigo-500 hover:underline mr-5'
+                                >
+                                    Mehr Lesen
+                                </a>
+                                <button
+                                    onClick={() => handleFlip(event.id)}
+                                    className='font-stretch-semi-expanded text-indigo-500 hover:underline'
+                                >
+                                    Beschreibung
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Back of the Card */}
+                        <div
+                            className={`w-full backface-hidden ${
+                                flippedCardId === event.id
+                                    ? 'flex flex-col h-full'
+                                    : 'hidden'
+                            }`}
+                            style={{
+                                height: frontHeights[event.id] || '1rem',
+                            }}
+                        >
+                            {/* Content area with scroll */}
+                            <div className='flex-1 overflow-y-auto scrollbar-fade'>
+                                <p
+                                    className='font-stretch-semi-expanded text-sm text-gray-700 mb-4 description break-words overflow-x-hidden'
+                                    dangerouslySetInnerHTML={{
+                                        __html: event.description,
+                                    }}
+                                ></p>
+                            </div>
+
+                            {/* Button area */}
+                            <div className='mt-auto pt-3'>
+                                <button
+                                    onClick={() => handleFlip(event.id)}
+                                    className='font-stretch-semi-expanded text-indigo-500 hover:underline'
+                                >
+                                    Zurück
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
 }
 
 // Component for rendering individual filter cards
-function FilterCard({ symbol, text, id, filterEvents }) {
-  // Create the icon element
-  const symbolIcon = (
-    <FontAwesomeIcon icon={symbol} className="mr-2" size="lg" />
-  );
+function FilterCard({ symbol, text, id, isActive, filterEvents }) {
+    // Create the icon element
+    const symbolIcon = (
+        <FontAwesomeIcon icon={symbol} className='mr-2' size='lg' />
+    );
 
-  // Replace spaces in text with non-breaking spaces
-  const noBreakSpaceText = text.replace(/ /g, "\u00A0");
+    // Replace spaces in text with non-breaking spaces
+    const noBreakSpaceText = text.replace(/ /g, '\u00A0');
 
-  return (
-    <>
-      <button
-        onClick={() => filterEvents(id)}
-        className="mr-3 rounded-3xl border p-2 pl-3 pr-4 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow flex flex-row items-center"
-        style={{}} // Changed from maxWidth to width
-      >
-        {symbolIcon}
-        <p className="font-stretch-semi-expanded">{noBreakSpaceText}</p>
-      </button>
-    </>
-  );
+    return (
+        <>
+            <button
+                onClick={() => filterEvents(id)}
+                className={`mr-3 rounded-3xl border p-2 pl-3 pr-4
+                ${
+                    isActive
+                        ? 'border-indigo-200 bg-indigo-50 filter drop-shadow-lg text-indigo-600'
+                        : 'border-stone-200 bg-white filter drop-shadow-md hover:drop-shadow-lg'
+                }
+                transition-all flex flex-row items-center`}
+            >
+                {symbolIcon}
+                <p className='font-stretch-semi-expanded'>{noBreakSpaceText}</p>
+            </button>
+        </>
+    );
 }
 
-// Placeholder component for time indicator
-function TimeIndicator() {
-  return (
-    <>
-      <div className="flex flex-row items-center">
-        <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="size-1 fill-green-400 mr-2 animate-ping "
-          >
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="size-1 fill-green-400 mr-2 animate-ping absolute"
-          >
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        </div>
+// This component visually indicates whether an event is currently active based on its start and end times.
+// It displays a green pulsating dot if the event is active, or a gray static dot if it is not.
+function TimeIndicator({ eventStart, eventEnd }) {
+    const [currentTime, setCurrentTime] = useState(
+        new Date(Date.now()).getTime()
     );
+
+    useEffect(() => {
+        // Update time every second
+        const intervalId = setInterval(() => {
+            setCurrentTime(Date.now());
+        }, 1000);
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(intervalId);
+    }, []);
+
+    var activeNumber = -1;
+
+    if (currentTime > eventStart && currentTime < eventEnd) {
+        activeNumber = 1;
+    } else if (currentTime < eventStart) {
+        activeNumber = 0;
+    } else if (currentTime > eventEnd) {
+        activeNumber = 2;
+    }
+
+    var textContent = `Ein Fehler ist aufgetreten.`;
+
+    if (activeNumber === 0) {
+        textContent = `Beginnt in ${getTimeUntilString(currentTime, eventStart)}`;
+    } else if (activeNumber === 1) {
+        textContent = `Endet in ${getTimeUntilString(currentTime, eventEnd)}`;
+    } else if (activeNumber === 2) {
+        textContent = `Zu Ende`;
+    }
+
+    return (
+        <>
+            <div className='flex flex-row items-center content-center my-3'>
+                <span
+                    className={`relative mr-2 flex size-2 ${activeNumber === 0 ? '' : 'hidden'}`}
+                    title='Diese Veranstaltung hat noch nicht begonnen.'
+                >
+                    <span className='absolute inline-flex h-full w-full rounded-full bg-sky-500 opacity-75'></span>
+                </span>
+
+                <span
+                    className={`relative mr-2 flex size-2 ${activeNumber === 1 ? '' : 'hidden'}`}
+                    title='Diese Veranstaltung läuft aktuell.'
+                >
+                    <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75'></span>
+                    <span className='relative inline-flex size-2 rounded-full bg-green-400'></span>
+                </span>
+
+                <span
+                    className={`relative mr-2 flex size-2 ${activeNumber === 2 ? '' : 'hidden'} `}
+                >
+                    <span
+                        className='relative inline-flex size-2 rounded-full bg-stone-400 opacity-75'
+                        title='Diese Veranstaltung ist zuende.'
+                    ></span>
+                </span>
+                <p className='font-stretch-semi-expanded text-sm text-gray-600'>
+                    {textContent}
+                </p>
+            </div>
+        </>
+    );
+}
+
+function getTimeUntilString(now, date) {
+    const timeDiff = date - now;
+    const seconds = Math.floor(timeDiff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+        return `${days} ${days === 1 ? 'Tag' : 'Tagen'}`;
+    } else if (hours > 0) {
+        return `${hours} ${hours === 1 ? 'Stunde' : 'Stunden'}`;
+    } else if (minutes > 0) {
+        return `${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'}`;
+    } else {
+        return `${seconds} ${seconds === 1 ? 'Sekunde' : 'Sekunden'}`;
+    }
 }
