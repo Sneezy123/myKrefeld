@@ -19,7 +19,6 @@ export default function Discover({ events }) {
 
     const scrollToHash = () => {
         const hash = window.location.hash.replace('#', ''); // Get the hash without the '#' symbol
-
         if (hash) {
             const matchingRef = itemRefs.current[hash];
 

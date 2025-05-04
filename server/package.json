@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "vercel-build": "npm install && npm run build"
+    "vercel-build": "echo \"no build needed for backend\""
   },
   "repository": {
     "type": "git",
