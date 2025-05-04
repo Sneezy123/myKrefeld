@@ -1,8 +1,31 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from "@tailwindcss/vite"
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import basicSsl from '@vitejs/plugin-basic-ssl';
+import tailwindcss from '@tailwindcss/vite';
+import fs from 'fs';
+import path from 'path';
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(),],
-})
+    plugins: [react(), basicSsl(), tailwindcss()],
+    build: {
+        outDir: 'dist',
+        assetsDir: 'assets',
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['react', 'react-dom', 'react-router-dom'],
+                },
+            },
+        },
+    },
+    base: './',
+    server: {
+        proxy: {
+            '/api': {
+                target: 'https://localhost:3000',
+                secure: false,
+                changeOrigin: true,
+            },
+        },
+    },
+});

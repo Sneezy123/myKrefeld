@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import debounce from 'lodash.debounce';
+import { useLocation } from 'react-router-dom';
 import '../../app/App.css';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -13,6 +14,31 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function Discover({ events }) {
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const title = params.get('title');
+
+        if (title) {
+            const xpath = `//li[@data-title="${title}"]`; // XPath to find the <li> element
+            const element = document.evaluate(
+                xpath,
+                document,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+            ).singleNodeValue;
+
+            console.log('XPath:', xpath);
+            console.log('Element Found via XPath:', element);
+
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }, [location]);
+
     // State to track which card is flipped
     const [flippedCardId, setFlippedCardId] = useState(null);
     // State to store heights for each card's front
@@ -67,6 +93,17 @@ export default function Discover({ events }) {
             );
         } else if (filterId === 1) {
             // Filter events based on their cost
+            setFilteredEvents(
+                events.filter((event) => {
+                    const cost = event.cost?.toString().toLowerCase();
+                    return (
+                        cost === '0' ||
+                        cost === 'free' ||
+                        cost === 'kostenlos' ||
+                        cost === 'frei'
+                    );
+                })
+            );
         } else if (filterId === 2) {
             // Filter events based on their popularity
         } else if (filterId === 3) {
@@ -166,9 +203,8 @@ export default function Discover({ events }) {
                 {filteredEvents.map((event) => (
                     <li
                         key={event.id}
-                        className={`relative rounded-3xl border p-6 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow ${
-                            flippedCardId === event.id ? 'flipped' : ''
-                        } min-h-[400px] flex flex-col`} // Set a minimum height and use flex column
+                        data-title={event.title}
+                        className='relative rounded-3xl border p-6 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow min-h-[400px] flex flex-col'
                     >
                         {/* Front of the Card */}
                         <div
@@ -190,7 +226,6 @@ export default function Discover({ events }) {
                                 ) : (
                                     <div className='rounded-2xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
                                 )}
-
                                 {/* Event Title */}
                                 <h2
                                     className='font-stretch-semi-expanded font-semibold mb-2 text-xl'
@@ -198,7 +233,6 @@ export default function Discover({ events }) {
                                         __html: event.title,
                                     }}
                                 ></h2>
-
                                 <TimeIndicator
                                     eventStart={new Date(
                                         event.start_date
@@ -207,20 +241,40 @@ export default function Discover({ events }) {
                                         event.end_date
                                     ).getTime()}
                                 />
-
                                 {/* Event Details */}
                                 <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-2'>
                                     <strong>Beginn:</strong>{' '}
-                                    {new Date(
-                                        event.start_date
-                                    ).toLocaleString()}{' '}
+                                    {new Date(event.start_date).toLocaleString(
+                                        [],
+                                        {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        }
+                                    )}
+                                    {' Uhr'}
                                     <br />
                                     <strong>Ende:</strong>{' '}
-                                    {new Date(event.end_date).toLocaleString()}
+                                    {new Date(event.end_date).toLocaleString(
+                                        [],
+                                        {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        }
+                                    )}
+                                    {' Uhr'}
                                 </p>
-
                                 {/* Venue */}
-                                {event.venue?.venue !== '' && (
+                                {event.venue?.venue === '' ? (
+                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                        <strong>Veranstaltungsort:</strong> k.A.
+                                    </p>
+                                ) : (
                                     <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
                                         <strong>Veranstaltungsort:</strong>{' '}
                                         {event.venue?.venue}:{' '}
@@ -229,6 +283,26 @@ export default function Discover({ events }) {
                                             {event.venue?.zip}{' '}
                                             {event.venue?.city}
                                         </span>
+                                    </p>
+                                )}
+                                {event.cost === '' ? (
+                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                        <strong>Preis:</strong> k.A.
+                                    </p>
+                                ) : (
+                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                        <strong>Preis:</strong>{' '}
+                                        {event.cost
+                                            ?.toString()
+                                            .toLowerCase() === '0' ||
+                                        event.cost?.toString().toLowerCase() ===
+                                            'free' ||
+                                        event.cost?.toString().toLowerCase() ===
+                                            'kostenlos' ||
+                                        event.cost?.toString().toLowerCase() ===
+                                            'frei'
+                                            ? 'Gratis'
+                                            : event.cost}
                                     </p>
                                 )}
                             </div>
