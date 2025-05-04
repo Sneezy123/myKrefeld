@@ -186,6 +186,7 @@ export default function Discover({ events }) {
     useEffect(() => {
         const handleScroll = () => {
             if (scrollableListRef.current) {
+                console.log('Scrollable List Ref:', scrollableListRef.current); // Debug log
                 const scrollTop = scrollableListRef.current.scrollTop; // Get the scroll position of the <ul>
                 console.log('Scroll position:', scrollTop); // Debug log
                 setShowScrollButton(scrollTop > 300); // Show button if scrolled more than 300px
