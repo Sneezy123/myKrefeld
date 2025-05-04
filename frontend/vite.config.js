@@ -8,7 +8,7 @@ import path from 'path';
 export default defineConfig({
     plugins: [react(), basicSsl(), tailwindcss()],
     build: {
-        outDir: '../dist', // Stelle sicher, dass dies korrekt ist
+        outDir: 'dist',
         assetsDir: 'assets',
         rollupOptions: {
             output: {
