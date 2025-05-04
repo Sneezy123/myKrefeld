@@ -1,7 +1,8 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '../../app/App.css';
 import mapJSON from './maplibre-style.json';
-import Marker from './marker.jsx';
+import Marker from './LocationMarker.jsx';
+import UserLocationMarker from './UserPositionMarker.jsx';
 
 import {
     RMap,
@@ -11,6 +12,7 @@ import {
     RNavigationControl,
 } from 'maplibre-react-components';
 import { useRef, useState, useEffect } from 'react';
+import { AttributionControl } from 'maplibre-gl';
 
 export default function Map({ events }) {
     const [showPopup, setShowPopup] = useState(true);
@@ -35,7 +37,7 @@ export default function Map({ events }) {
     }, []);
 
     return (
-        <>
+        <div className='w-full h-full overflow-hidden scrollbar-hidden'>
             <RMap
                 ref={mapRef}
                 style={{ minHeight: 200 }}
@@ -43,6 +45,7 @@ export default function Map({ events }) {
                 initialCenter={[6.565411, 51.334534]} // Krefeld
                 initialZoom={12.95}
                 minZoom={12}
+                initialAttributionControl={false}
             >
                 <RNavigationControl
                     position='top-right'
@@ -65,18 +68,8 @@ export default function Map({ events }) {
                                 });
                             }}
                         >
-                            <Marker />
+                            <Marker className='size-2' />
                         </RMarker>
-                        {userLocation && (
-                            <RMarker
-                                longitude={userLocation.lon}
-                                latitude={userLocation.lat}
-                                initialAnchor='center'
-                            >
-                                <div className='absolute inline-flex animate-ping h-full w-full rounded-full bg-sky-500 opacity-50 ' />
-                                <div className='w-3 h-3 rounded-full bg-blue-500 border-2 border-white' />
-                            </RMarker>
-                        )}
 
                         {popupStates[event.id] && (
                             <RPopup
@@ -101,6 +94,16 @@ export default function Map({ events }) {
                         )}
                     </>
                 ))}
+                {userLocation && (
+                    <RMarker
+                        longitude={userLocation.lon}
+                        latitude={userLocation.lat}
+                        initialAnchor='center'
+                    >
+                        <UserLocationMarker />
+                    </RMarker>
+                )}
+
                 {showGeolocate && (
                     <RGeolocateControl
                         ref={geolocateRef}
@@ -129,10 +132,10 @@ export default function Map({ events }) {
                         { enableHighAccuracy: true }
                     );
                 }}
-                className='fixed bottom-20 right-5 z-50 bg-black text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:bg-neutral-800 transition text-xl'
+                className='fixed bottom-5 right-5 z-50 bg-black text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:bg-neutral-800 transition text-xl'
             >
                 📍
             </button>
-        </>
+        </div>
     );
 }
