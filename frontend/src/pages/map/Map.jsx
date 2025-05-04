@@ -74,7 +74,7 @@ export default function Map({ events }) {
                                 }
                             >
                                 <a
-                                    href={`/discover?id=${event.id}`} // Pass event.id instead of event.title
+                                    href={`/discover/#${event.id}`} // Use the fragment identifier
                                     className='font-bold font-stretch-semi-expanded'
                                     dangerouslySetInnerHTML={{
                                         __html: event.title,

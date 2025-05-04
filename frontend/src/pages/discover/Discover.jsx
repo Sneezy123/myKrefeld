@@ -17,6 +17,21 @@ export default function Discover({ events }) {
     const location = useLocation();
     const itemRefs = useRef({}); // Create a map of refs for each event
 
+    const scrollToHash = () => {
+        const hash = window.location.hash.replace('#', ''); // Get the hash without the '#' symbol
+
+        if (hash) {
+            const matchingRef = itemRefs.current[hash];
+
+            if (matchingRef) {
+                matchingRef.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                });
+            }
+        }
+    };
+
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const eventId = params.get('id'); // Use 'id' instead of 'title'
@@ -33,6 +48,16 @@ export default function Discover({ events }) {
             }
         }
     }, [location]);
+
+    useEffect(() => {
+        // Handle hash on page load
+        scrollToHash();
+    }, []); // Run only on initial render
+
+    useEffect(() => {
+        // Handle hash when it changes
+        scrollToHash();
+    }, [location.hash]); // Trigger when the hash changes
 
     // State to track which card is flipped
     const [flippedCardId, setFlippedCardId] = useState(null);
@@ -199,7 +224,7 @@ export default function Discover({ events }) {
                     <li
                         key={event.id}
                         ref={(el) => (itemRefs.current[event.id] = el)} // Assign ref to each <li>
-                        data-id={event.id} // Use event.id as the identifier
+                        id={event.id} // Set the id attribute for the element
                         className='relative rounded-3xl border p-6 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow min-h-[400px] flex flex-col'
                     >
                         {/* Front of the Card */}
