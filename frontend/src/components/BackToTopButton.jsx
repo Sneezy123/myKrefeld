@@ -4,15 +4,22 @@ export default function BackToTopButton() {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        const toggleVisibility = () => {
-            setVisible(window.pageYOffset > 300);
+        const scrollContainer = document.getElementById('scroll-container');
+        if (!scrollContainer) return;
+
+        const onScroll = () => {
+            setVisible(scrollContainer.scrollTop > 300);
         };
-        window.addEventListener('scroll', toggleVisibility);
-        return () => window.removeEventListener('scroll', toggleVisibility);
+
+        scrollContainer.addEventListener('scroll', onScroll);
+        return () => scrollContainer.removeEventListener('scroll', onScroll);
     }, []);
 
     const scrollToTop = () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const scrollContainer = document.getElementById('scroll-container');
+        if (scrollContainer) {
+            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     };
 
     return (
@@ -20,10 +27,13 @@ export default function BackToTopButton() {
             <button
                 onClick={scrollToTop}
                 className='
-          fixed bottom-5 right-5 z-50
-          bg-indigo-600 text-white p-3 rounded-full shadow-md
-          hover:bg-indigo-700 transition
-        '
+                    fixed bottom-5 right-5 z-50
+                    w-12 h-12 flex items-center justify-center
+                    rounded-full shadow-md
+                    hover:bg-neutral-800 transition
+                    text-xl
+                    bg-black text-white
+                     '
             >
                 ↑
             </button>

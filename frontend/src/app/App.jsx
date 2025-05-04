@@ -98,7 +98,10 @@ function NavBar() {
                     </div>
                 </div>
 
-                <div className='h-dvh grow bg-stone-100 overflow-y-scroll'>
+                <div
+                    id='scroll-container'
+                    className='h-dvh grow bg-stone-100 overflow-y-scroll'
+                >
                     <Outlet />
                 </div>
             </div>
