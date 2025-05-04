@@ -55,6 +55,13 @@ export default function Discover({ events }) {
     }, []); // Run only on initial render
 
     useEffect(() => {
+        // Wait until events are populated and refs are assigned
+        if (events.length > 0) {
+            scrollToHash();
+        }
+    }, [events]); // Run when events are updated
+
+    useEffect(() => {
         // Handle hash when it changes
         scrollToHash();
     }, [location.hash]); // Trigger when the hash changes

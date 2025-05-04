@@ -1,11 +1,11 @@
 {
-  "name": "mykrefeld",
+  "name": "my-krefeld-backend",
   "version": "1.0.0",
   "description": "Deine App für Krefeld",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "vercel-build": "echo \"no build needed for backend\""
+    "vercel-build": "npm install && npm run build"
   },
   "repository": {
     "type": "git",
