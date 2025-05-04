@@ -1,187 +1,131 @@
-import axios from 'axios';
-import cors from 'cors';
 import express from 'express';
-import mongoose from 'mongoose';
+import cors from 'cors';
+import axios from 'axios';
 import cron from 'node-cron';
-import https from 'https';
-import http from 'http';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
+import { connectToDatabase } from './lib/db.js';
 import Event from './models/Event.js';
+import 'dotenv/config';
 
-// Get current directory
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+console.log(process.env.MONGODB_URI);
 
-// SSL certificates configuration
-const options = {
-    key: fs.readFileSync(
-        path.join(__dirname, '..', 'certificates', 'private.key')
-    ),
-    cert: fs.readFileSync(
-        path.join(__dirname, '..', 'certificates', 'certificate.pem')
-    ),
-};
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-const today = new Date().toISOString().split('T')[0];
-const eventUrl = `https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events?page=1&per_page=100&start_date=${today}`; // Increased per_page
-const dbUri =
-    'mongodb+srv://nilshendrik13:67L87QWjzjnhPNYu@mykrefeldcluster.ftrmtih.mongodb.net/?retryWrites=true&w=majority&appName=myKrefeldCluster';
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+    console.error('Fehler: MONGODB_URI nicht gesetzt');
+    process.exit(1);
+}
 
-mongoose.connect(dbUri, {
-    socketTimeoutMS: 10000,
-});
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-    console.log('Connected to MongoDB');
-});
-
-// Get API data
-
-const updateEvents = async () => {
+async function updateEvents() {
     try {
-        // Fetch events from the API
-        const total_pages = (await axios.get(eventUrl)).data.total_pages;
+        const today = new Date().toISOString().split('T')[0];
+        const urlBase = `https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events`;
+        const { data: first } = await axios.get(
+            `${urlBase}?page=1&per_page=100&start_date=${today}`
+        );
+        const totalPages = first.total_pages;
 
-        for (var i = 0; i < total_pages; i++) {
-            const response = await axios.get(
-                `https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events?page=${
-                    i + 1
-                }&per_page=100&start_date=${today}`
+        for (let i = 1; i <= totalPages; i++) {
+            const { data } = await axios.get(
+                `${urlBase}?page=${i}&per_page=100&start_date=${today}`
             );
-            const events = response.data.events;
+            for (const ev of data.events) {
+                const addr = [
+                    ev.venue?.address || '',
+                    ev.venue?.city || '',
+                    'Germany',
+                ]
+                    .filter(Boolean)
+                    .join(', ');
+                const geo =
+                    (
+                        await axios.get(
+                            `https://nominatim.openstreetmap.org/search`,
+                            {
+                                params: {
+                                    q: addr,
+                                    'accept-language': 'de',
+                                    countrycodes: 'de',
+                                    format: 'json',
+                                },
+                            }
+                        )
+                    ).data[0] || {};
 
-            console.log('Fetched events.');
-
-            // Iterate over each event and upsert into the database
-            for (const event of events) {
-                const geocodeResponse = await axios.get(
-                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-                        (event.venue?.address
-                            ? event.venue?.address + ' '
-                            : '') +
-                            (event.venue?.city ? event.venue?.city : '') +
-                            (event.venue?.address || event.venue?.city
-                                ? ', Germany'
-                                : '')
-                    )}&accept-language=de&countrycodes=de&format=json`
-                );
-                const geocodeData = geocodeResponse.data;
-                console.log(
-                    (event.venue?.address ? event.venue?.address + ' ' : '') +
-                        (event.venue?.city ? event.venue?.city : '') +
-                        (event.venue?.address || event.venue?.city
-                            ? ', Germany'
-                            : '')
-                );
                 await Event.findOneAndUpdate(
-                    { id: event.id }, // Match by unique event ID
+                    { id: ev.id },
                     {
-                        id: event.id,
-                        title: event.title,
-                        description: event.description,
-                        start_date: new Date(event.start_date),
-                        end_date: new Date(event.end_date),
-                        url: event.url,
+                        id: ev.id,
+                        title: ev.title,
+                        description: ev.description,
+                        start_date: new Date(ev.start_date),
+                        end_date: new Date(ev.end_date),
+                        url: ev.url,
                         image: {
-                            url: event.image?.url || '',
-                            width: event.image?.width || 0,
-                            height: event.image?.height || 0,
+                            url: ev.image?.url || '',
+                            width: ev.image?.width || 0,
+                            height: ev.image?.height || 0,
                         },
-                        website: event.website || '',
+                        website: ev.website || '',
                         venue: {
-                            id: event.venue?.id || 0,
-                            venue: event.venue?.venue || '',
-                            address: event.venue?.address || '',
-                            city: event.venue?.city || '',
-                            zip: event.venue?.zip || '',
-                            phone: event.venue?.phone || '',
-                            website: event.venue?.website || '',
-                            lat: geocodeData[0]
-                                ? parseFloat(geocodeData[0].lat)
-                                : 0,
-                            lon: geocodeData[0]
-                                ? parseFloat(geocodeData[0].lon)
-                                : 0,
+                            id: ev.venue?.id || 0,
+                            venue: ev.venue?.venue || '',
+                            address: ev.venue?.address || '',
+                            city: ev.venue?.city || '',
+                            zip: ev.venue?.zip || '',
+                            phone: ev.venue?.phone || '',
+                            website: ev.venue?.website || '',
+                            lat: parseFloat(geo.lat) || 0,
+                            lon: parseFloat(geo.lon) || 0,
                         },
-                        cost: event.cost || '',
+                        cost: ev.cost || '',
                     },
-                    { upsert: true, new: true } // Create if not found, return the updated document
+                    { upsert: true, new: true }
                 );
             }
-
-            console.log('Events successfully upserted into the database.');
         }
-    } catch (error) {
-        console.error('Error fetching or saving events:', error);
+        console.log('Events erfolgreich aktualisiert');
+    } catch (err) {
+        console.error('Fehler beim Aktualisieren der Events:', err);
     }
-};
+}
 
-// Delete old events
-const deleteOldEvents = async () => {
+async function deleteOldEvents() {
     try {
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate());
-
-        const result = await Event.deleteMany({
-            end_date: { $lt: cutoffDate },
-        });
-        console.log(`Deleted ${result.deletedCount} old events.`);
-    } catch (error) {
-        console.error('Error deleting old events:', error);
+        const cutoff = new Date();
+        const result = await Event.deleteMany({ end_date: { $lt: cutoff } });
+        console.log(`Gelöschte alte Events: ${result.deletedCount}`);
+    } catch (err) {
+        console.error('Fehler beim Löschen alter Events:', err);
     }
-};
+}
 
-// cron job to run every hour
-cron.schedule('*/10 * * * *', () => {
-    console.log('Running cron job to update events...');
-    updateEvents();
-    deleteOldEvents();
-});
+(async () => {
+    await connectToDatabase(uri);
+    // initial run
+    await updateEvents();
+    await deleteOldEvents();
+    // cron alle 10 Minuten
+    cron.schedule('*/10 * * * *', async () => {
+        console.log('Cron-Job startet');
+        await updateEvents();
+        await deleteOldEvents();
+    });
+})();
 
-console.log('Running cron job to update events...');
-updateEvents();
-deleteOldEvents();
-
-// Start the Express server
-const app = express();
-
-// Add middleware to redirect HTTP to HTTPS
-app.use((req, res, next) => {
-    if (req.secure) {
-        next();
-    } else {
-        const host = req.headers.host?.split(':')[0] || req.headers.host;
-        res.redirect(301, `https://${host}:3000${req.url}`);
-    }
-});
-
-app.use(cors());
-
-// Create HTTP server for redirect
-const httpServer = http.createServer(app);
-
-// Create HTTPS server
-const httpsServer = https.createServer(options, app);
-
-// Listen on both ports
-httpServer.listen(80, () => {
-    console.log('HTTP Server running on port 80 (redirecting to HTTPS)');
-});
-
-httpsServer.listen(3000, () => {
-    console.log('HTTPS Server running on port 3000');
-});
-
+const port = process.env.PORT || 3000;
 app.get('/api/events', async (req, res) => {
     try {
         const events = await Event.find();
         res.status(200).json(events);
-    } catch (error) {
-        console.error('Error fetching events:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
+    } catch (err) {
+        console.error('Fehler beim Abruf der Events:', err);
+        res.status(500).json({ error: 'Events konnten nicht geladen werden' });
     }
+});
+
+app.listen(port, () => {
+    console.log(`Server läuft auf Port ${port}`);
 });
