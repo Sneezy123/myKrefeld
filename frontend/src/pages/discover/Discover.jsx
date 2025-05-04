@@ -16,6 +16,7 @@ import {
 export default function Discover({ events }) {
     const location = useLocation();
     const itemRefs = useRef({}); // Create a map of refs for each event
+    const [showScrollButton, setShowScrollButton] = useState(false);
 
     const scrollToHash = () => {
         const hash = window.location.hash.replace('#', ''); // Get the hash without the '#' symbol
@@ -181,6 +182,18 @@ export default function Discover({ events }) {
         setFilteredEvents(events);
     }, [events]);
 
+    useEffect(() => {
+        const handleScroll = () => {
+            console.log('Scroll position:', window.scrollY); // Debug log
+            setShowScrollButton(window.scrollY > 300); // Show button if scrolled more than 300px
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        // Cleanup the event listener on component unmount
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     /* -------------------------------- useEffects End ------------------------------- */
 
     // Render a loading state if no events are available
@@ -203,7 +216,7 @@ export default function Discover({ events }) {
 
     // Render the main content
     return (
-        <div className='bg-white p-4 w-full'>
+        <div className='bg-white p-4 w-full relative'>
             <h1 className='font-stretch-semi-expandedd text-4xl ml-3 lg:ml-15'>
                 Entdecke aktuelle Veranstaltungen
             </h1>
@@ -391,6 +404,20 @@ export default function Discover({ events }) {
                     </li>
                 ))}
             </ul>
+
+            {/* Back to Top Button */}
+            {showScrollButton && (
+                <button
+                    onClick={() =>
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }
+                    className='fixed bottom-5 right-5 bg-indigo-500 text-white p-3 rounded-full shadow-lg hover:bg-indigo-600 transition-all'
+                    aria-label='Back to Top'
+                >
+                    ↑
+                </button>
+            )}
+            {console.log('Show Scroll Button:', showScrollButton)}
         </div>
     );
 }
