@@ -12,7 +12,7 @@ export default function App() {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const response = await fetch(__API_BASE__ + '/api/events');
+                const response = await fetch(__API_BASE__ + '/events');
 
                 if (!response.ok) {
                     throw new Error('Network response was not ok');

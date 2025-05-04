@@ -30,7 +30,7 @@ export default defineConfig({
     },
     define: {
         __API_BASE__: JSON.stringify(
-            process.env.VITE_API_URL || 'http://localhost:3000'
+            process.env.VITE_API_URL || 'http://localhost:3000/api'
         ),
     },
 });
