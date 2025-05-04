@@ -74,7 +74,7 @@ export default function Map({ events }) {
                                 }
                             >
                                 <a
-                                    href={`/discover?title=${encodeURIComponent(event.title)}`}
+                                    href={`/discover?id=${event.id}`} // Pass event.id instead of event.title
                                     className='font-bold font-stretch-semi-expanded'
                                     dangerouslySetInnerHTML={{
                                         __html: event.title,

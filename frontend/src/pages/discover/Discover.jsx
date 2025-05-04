@@ -19,13 +19,11 @@ export default function Discover({ events }) {
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const title = params.get('title');
+        const eventId = params.get('id'); // Use 'id' instead of 'title'
 
-        if (title) {
-            // Find the ref for the event with the matching title
-            const matchingRef = Object.values(itemRefs.current).find(
-                (ref) => ref?.dataset?.title === title
-            );
+        if (eventId) {
+            // Find the ref for the event with the matching id
+            const matchingRef = itemRefs.current[eventId];
 
             if (matchingRef) {
                 matchingRef.scrollIntoView({
@@ -201,7 +199,7 @@ export default function Discover({ events }) {
                     <li
                         key={event.id}
                         ref={(el) => (itemRefs.current[event.id] = el)} // Assign ref to each <li>
-                        data-title={event.title}
+                        data-id={event.id} // Use event.id as the identifier
                         className='relative rounded-3xl border p-6 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow min-h-[400px] flex flex-col'
                     >
                         {/* Front of the Card */}
