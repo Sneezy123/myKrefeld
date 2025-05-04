@@ -16,9 +16,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // SSL certificates configuration
 const options = {
-    key: fs.readFileSync(path.join(__dirname, 'certificates', 'private.key')),
+    key: fs.readFileSync(
+        path.join(__dirname, '..', 'certificates', 'private.key')
+    ),
     cert: fs.readFileSync(
-        path.join(__dirname, 'certificates', 'certificate.pem')
+        path.join(__dirname, '..', 'certificates', 'certificate.pem')
     ),
 };
 

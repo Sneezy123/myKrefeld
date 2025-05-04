@@ -15,26 +15,23 @@ import {
 
 export default function Discover({ events }) {
     const location = useLocation();
+    const itemRefs = useRef({}); // Create a map of refs for each event
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const title = params.get('title');
 
         if (title) {
-            const xpath = `//li[@data-title="${title}"]`; // XPath to find the <li> element
-            const element = document.evaluate(
-                xpath,
-                document,
-                null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE,
-                null
-            ).singleNodeValue;
+            // Find the ref for the event with the matching title
+            const matchingRef = Object.values(itemRefs.current).find(
+                (ref) => ref?.dataset?.title === title
+            );
 
-            console.log('XPath:', xpath);
-            console.log('Element Found via XPath:', element);
-
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (matchingRef) {
+                matchingRef.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                });
             }
         }
     }, [location]);
@@ -203,6 +200,7 @@ export default function Discover({ events }) {
                 {filteredEvents.map((event) => (
                     <li
                         key={event.id}
+                        ref={(el) => (itemRefs.current[event.id] = el)} // Assign ref to each <li>
                         data-title={event.title}
                         className='relative rounded-3xl border p-6 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow min-h-[400px] flex flex-col'
                     >
