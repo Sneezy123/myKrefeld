@@ -10,12 +10,15 @@ import {
     RGeolocateControl,
     RNavigationControl,
 } from 'maplibre-react-components';
-import { useEffect, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 export default function Map({ events }) {
     const [showPopup, setShowPopup] = useState(true);
-
+    const [showGeolocate, setShowGeolocate] = useState(false);
+    const geolocateRef = useRef(null);
+    const mapRef = useRef(null);
     const [popupStates, setPopupStates] = useState({});
+    const [userLocation, setUserLocation] = useState(null);
 
     const togglePopup = (eventId) => {
         setPopupStates((prevState) => ({
@@ -24,9 +27,17 @@ export default function Map({ events }) {
         }));
     };
 
+    useEffect(() => {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => console.log('✅ Got location:', pos),
+            (err) => console.error('❌ Geolocation error:', err)
+        );
+    }, []);
+
     return (
         <>
             <RMap
+                ref={mapRef}
                 style={{ minHeight: 200 }}
                 mapStyle={mapJSON}
                 initialCenter={[6.565411, 51.334534]} // Krefeld
@@ -37,12 +48,7 @@ export default function Map({ events }) {
                     position='top-right'
                     visualizePitch={true}
                 />
-                <RGeolocateControl
-                    enableHighAccuracy={true}
-                    showUserLocation={true}
-                    showAccuracyCircle={true}
-                    trackUserLocation={false}
-                />
+
                 {events.map((event) => (
                     <>
                         <RMarker
@@ -61,6 +67,17 @@ export default function Map({ events }) {
                         >
                             <Marker />
                         </RMarker>
+                        {userLocation && (
+                            <RMarker
+                                longitude={userLocation.lon}
+                                latitude={userLocation.lat}
+                                initialAnchor='center'
+                            >
+                                <div className='absolute inline-flex animate-ping h-full w-full rounded-full bg-sky-500 opacity-50 ' />
+                                <div className='w-3 h-3 rounded-full bg-blue-500 border-2 border-white' />
+                            </RMarker>
+                        )}
+
                         {popupStates[event.id] && (
                             <RPopup
                                 longitude={event.venue?.lon}
@@ -84,7 +101,38 @@ export default function Map({ events }) {
                         )}
                     </>
                 ))}
+                {showGeolocate && (
+                    <RGeolocateControl
+                        ref={geolocateRef}
+                        enableHighAccuracy={true}
+                        showUserLocation={true}
+                        showAccuracyCircle={true}
+                        trackUserLocation={false}
+                    />
+                )}
             </RMap>
+            <button
+                onClick={() => {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            const { latitude, longitude } = pos.coords;
+                            setUserLocation({ lat: latitude, lon: longitude });
+                            mapRef.current?.jumpTo({
+                                center: [longitude, latitude],
+                                zoom: 15,
+                            });
+                        },
+                        (err) => {
+                            console.error('Geolocation error:', err);
+                            alert('Could not get your location.');
+                        },
+                        { enableHighAccuracy: true }
+                    );
+                }}
+                className='fixed bottom-20 right-5 z-50 bg-black text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:bg-neutral-800 transition text-xl'
+            >
+                📍
+            </button>
         </>
     );
 }

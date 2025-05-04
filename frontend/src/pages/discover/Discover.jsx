@@ -147,38 +147,103 @@ export default function Discover({ events }) {
 
     // Function to handle flipping a card
     const handleFlip = (id) => {
-        setFlippedCardId(flippedCardId === id ? null : id); // Toggle flip state
+        // If flipping from front to back (the clicked card is not the currently flipped one)
+        if (flippedCardId !== id) {
+            const front = frontRefs.current[id];
+            if (front) {
+                // Capture the height of the front BEFORE it's potentially hidden
+                const currentFrontHeight = front.offsetHeight;
+                // Only update the stored height if the captured height is valid (greater than 0)
+                if (currentFrontHeight > 0) {
+                    setFrontHeights((prevHeights) => ({
+                        ...prevHeights,
+                        [id]: currentFrontHeight, // Store the captured height
+                    }));
+                }
+            }
+        }
+        // Now toggle the flip state
+        setFlippedCardId(flippedCardId === id ? null : id);
     };
 
     /* -------------------------------- useEffect ------------------------------- */
 
     useEffect(() => {
-        // Function to update the heights of card fronts
         const updateHeights = () => {
-            const heights = {};
-            Object.keys(frontRefs.current).forEach((id) => {
+            const heightsToUpdate = {};
+            // Iterate through all card refs to potentially update heights
+            Object.keys(itemRefs.current).forEach((id) => {
                 const front = frontRefs.current[id];
                 if (front) {
-                    heights[id] = front.offsetHeight;
+                    const currentOffsetHeight = front.offsetHeight;
+
+                    // If the front is currently visible (offsetHeight > 0 and not hidden by display: none)
+                    if (
+                        currentOffsetHeight > 0 &&
+                        front.style.display !== 'none'
+                    ) {
+                        // Use the current calculated height
+                        heightsToUpdate[id] = currentOffsetHeight;
+                    } else if (frontHeights[id]) {
+                        // If the front is hidden BUT we have a previously stored height, use the stored height
+                        heightsToUpdate[id] = frontHeights[id];
+                    } else {
+                        // Fallback: If front is hidden and no stored height (should be rare if capture on flip works)
+                        // Could try getting the height of the back if it's visible, or a default
+                        const listItem = itemRefs.current[id];
+                        if (listItem) {
+                            const back = listItem.querySelector(
+                                '.backface-hidden:not(.hidden)'
+                            );
+                            if (back) {
+                                // Use the back's height if it's visible and front is not
+                                heightsToUpdate[id] = back.offsetHeight;
+                            } else {
+                                // Default fallback if neither front nor back is readily measurable
+                                heightsToUpdate[id] = 400;
+                            }
+                        } else {
+                            // Default fallback if itemRef is somehow missing
+                            heightsToUpdate[id] = 400;
+                        }
+                    }
+                } else if (frontHeights[id]) {
+                    // If the frontRef is not current but we have a stored height, use the stored height
+                    heightsToUpdate[id] = frontHeights[id];
+                } else {
+                    // Default fallback if no frontRef and no stored height
+                    heightsToUpdate[id] = 400;
                 }
             });
-            setFrontHeights(heights);
+
+            // Use a functional update to merge the calculated heights with the previous state
+            setFrontHeights((prevHeights) => {
+                // Create a new object with previous heights
+                const newHeights = { ...prevHeights };
+                // Overwrite or add heights for the cards we processed in this update cycle
+                Object.keys(heightsToUpdate).forEach((id) => {
+                    newHeights[id] = heightsToUpdate[id];
+                });
+                return newHeights;
+            });
         };
 
-        // Debounced version of the updateHeights function
         const debouncedUpdateHeights = debounce(updateHeights, 200);
 
-        // Initial calculation of heights
-        updateHeights();
+        // --- Modified part ---
+        // Use requestAnimationFrame to delay the initial height calculation
+        const animationFrameId = requestAnimationFrame(() => {
+            updateHeights();
+        });
+        // --- End of Modified part ---
 
-        // Add resize event listener to update heights on window resize
         window.addEventListener('resize', debouncedUpdateHeights);
 
-        // Cleanup event listener on component unmount
         return () => {
             window.removeEventListener('resize', debouncedUpdateHeights);
+            cancelAnimationFrame(animationFrameId); // Cleanup the animation frame
         };
-    }, [events]);
+    }, [events]); // Depends on events prop
 
     // Update filteredEvents when the original events prop changes
     useEffect(() => {
