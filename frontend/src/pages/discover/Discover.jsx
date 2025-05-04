@@ -20,20 +20,37 @@ export default function Discover({ events }) {
     const [showScrollButton, setShowScrollButton] = useState(false);
     const scrollableListRef = useRef(null); // Ref for the <ul> element
 
-    const scrollToHash = () => {
-        const hash = window.location.hash.replace('#', ''); // Get the hash without the '#' symbol
-        if (hash) {
-            const matchingRef = itemRefs.current[hash];
+    // Removed the separate scrollToHash function as the logic is now inline in the useEffect
+    // const scrollToHash = () => { ... }
 
-            if (matchingRef) {
-                matchingRef.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                });
-            }
+    // useEffect for handling scrolling to a hash fragment after events load
+    useEffect(() => {
+        // Only attempt to scroll if events data is loaded and there is a hash
+        if (events && events.length > 0 && location.hash) {
+            // Use requestAnimationFrame to ensure the DOM has updated after events are rendered
+            requestAnimationFrame(() => {
+                const hash = location.hash.replace('#', ''); // Get the hash without the '#'
+                if (hash) {
+                    const matchingRef = itemRefs.current[hash];
+
+                    if (matchingRef) {
+                        matchingRef.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center', // Scroll the element to the center of the container
+                        });
+                        // Optional: Clear the hash after scrolling if you don't want it in the URL anymore
+                        // window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+                    } else {
+                        // Optional: Log a warning if the element with the hash ID was not found
+                        console.warn(`Element with ID "${hash}" not found.`);
+                    }
+                }
+            });
         }
-    };
+        // Rerun this effect when the hash changes or when events data updates
+    }, [location.hash, events]); // Dependencies: location.hash and events prop
 
+    // useEffect for handling scrolling to an ID based on a query parameter
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const eventId = params.get('id'); // Use 'id' instead of 'title'
@@ -49,24 +66,8 @@ export default function Discover({ events }) {
                 });
             }
         }
+        // Depend on location to handle query parameter changes
     }, [location]);
-
-    useEffect(() => {
-        // Handle hash on page load
-        scrollToHash();
-    }, []); // Run only on initial render
-
-    useEffect(() => {
-        // Wait until events are populated and refs are assigned
-        if (events.length > 0) {
-            scrollToHash();
-        }
-    }, [events]); // Run when events are updated
-
-    useEffect(() => {
-        // Handle hash when it changes
-        scrollToHash();
-    }, [location.hash]); // Trigger when the hash changes
 
     // State to track which card is flipped
     const [flippedCardId, setFlippedCardId] = useState(null);
