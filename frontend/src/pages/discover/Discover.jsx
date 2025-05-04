@@ -17,7 +17,7 @@ export default function Discover({ events }) {
     const location = useLocation();
     const itemRefs = useRef({}); // Create a map of refs for each event
     const [showScrollButton, setShowScrollButton] = useState(false);
-    const scrollableDivRef = useRef(null); // Ref for the scrollable div
+    const scrollableListRef = useRef(null); // Ref for the <ul> element
 
     const scrollToHash = () => {
         const hash = window.location.hash.replace('#', ''); // Get the hash without the '#' symbol
@@ -185,22 +185,22 @@ export default function Discover({ events }) {
 
     useEffect(() => {
         const handleScroll = () => {
-            if (scrollableDivRef.current) {
-                const scrollTop = scrollableDivRef.current.scrollTop; // Get the scroll position of the div
+            if (scrollableListRef.current) {
+                const scrollTop = scrollableListRef.current.scrollTop; // Get the scroll position of the <ul>
                 console.log('Scroll position:', scrollTop); // Debug log
                 setShowScrollButton(scrollTop > 300); // Show button if scrolled more than 300px
             }
         };
 
-        const scrollableDiv = scrollableDivRef.current;
-        if (scrollableDiv) {
-            scrollableDiv.addEventListener('scroll', handleScroll);
+        const scrollableList = scrollableListRef.current;
+        if (scrollableList) {
+            scrollableList.addEventListener('scroll', handleScroll);
         }
 
         // Cleanup the event listener on component unmount
         return () => {
-            if (scrollableDiv) {
-                scrollableDiv.removeEventListener('scroll', handleScroll);
+            if (scrollableList) {
+                scrollableList.removeEventListener('scroll', handleScroll);
             }
         };
     }, []);
@@ -227,7 +227,7 @@ export default function Discover({ events }) {
 
     // Render the main content
     return (
-        <div ref={scrollableDivRef} className='bg-white p-4 w-full relative'>
+        <div className='bg-white p-4 w-full relative'>
             <h1 className='font-stretch-semi-expandedd text-4xl ml-3 lg:ml-15'>
                 Entdecke aktuelle Veranstaltungen
             </h1>
@@ -249,7 +249,10 @@ export default function Discover({ events }) {
                     );
                 })}
             </div>
-            <ul className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mx-15 mx-3 lg:my-5 my-3 max-w-full transition-all'>
+            <ul
+                ref={scrollableListRef}
+                className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mx-15 mx-3 lg:my-5 my-3 max-w-full transition-all overflow-y-auto'
+            >
                 {filteredEvents.map((event) => (
                     <li
                         key={event.id}
@@ -420,8 +423,8 @@ export default function Discover({ events }) {
             {showScrollButton && (
                 <button
                     onClick={() => {
-                        if (scrollableDivRef.current) {
-                            scrollableDivRef.current.scrollTo({
+                        if (scrollableListRef.current) {
+                            scrollableListRef.current.scrollTo({
                                 top: 0,
                                 behavior: 'smooth',
                             });
