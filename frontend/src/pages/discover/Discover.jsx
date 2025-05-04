@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import debounce from 'lodash.debounce';
 import { useLocation } from 'react-router-dom';
 import '../../app/App.css';
+import BackToTopButton from '../../components/BackToTopButton.jsx'; // Pfad anpassen falls nötig
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -419,25 +420,7 @@ export default function Discover({ events }) {
                     </li>
                 ))}
             </ul>
-
-            {/* Back to Top Button */}
-            {showScrollButton && (
-                <button
-                    onClick={() => {
-                        if (scrollableListRef.current) {
-                            scrollableListRef.current.scrollTo({
-                                top: 0,
-                                behavior: 'smooth',
-                            });
-                        }
-                    }}
-                    className='fixed bottom-5 right-5 bg-indigo-500 text-white p-3 rounded-full shadow-lg hover:bg-indigo-600 transition-all'
-                    aria-label='Back to Top'
-                >
-                    ↑
-                </button>
-            )}
-            {console.log('Show Scroll Button:', showScrollButton)}
+            <BackToTopButton />
         </div>
     );
 }
