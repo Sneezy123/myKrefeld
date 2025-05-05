@@ -67,6 +67,13 @@ export default function App() {
 }
 
 function NavBar() {
+    console.log('NavBar component rendering');
+    useEffect(() => {
+        console.log('NavBar component mounted'); // Log on mount
+        return () => {
+            console.log('NavBar component unmounted'); // Log on unmount (cleanup)
+        };
+    }, []);
     const cardStyle =
         'flex h-11 items-center md:justify-start justify-around flex-row md:mx-4 mx-2 my-3 p-2 md:p-3 md:px-3 bg-stone-100 rounded-3xl transition-all hover:bg-stone-200 duration-300';
     return (

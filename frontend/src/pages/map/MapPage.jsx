@@ -13,7 +13,10 @@ export default function MapPage({ events }) {
     const mapRef = useRef(null);
     const mapCRef = useRef(null);
 
+    console.log('Map component rendering');
+
     useEffect(() => {
+        console.log('Map component mounted');
         let map = mapRef.current;
         map = new maplibregl.Map({
             container: mapCRef.current, // container id
@@ -60,6 +63,7 @@ export default function MapPage({ events }) {
 
         return () => {
             map.remove();
+            console.log('Map component unmounted');
         };
     }, [events]);
 
