@@ -1,7 +1,7 @@
 import React, { useState } from 'react'; // Make sure useState is imported
 
 // In App.jsx or another component rendered within StrictMode:
-function MyStrictModeCheckComponent() {
+export default function MyStrictModeCheckComponent() {
     const [count, setCount] = useState(0);
 
     const handleClick = () => {
