@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, StrictMode } from 'react';
 import debounce from 'lodash.debounce';
 import { useLocation } from 'react-router-dom';
 import '../../app/App.css';
 import BackToTopButton from '../../components/BackToTopButton.jsx'; // Pfad anpassen falls nötig
+import StrictModeChecker from '../../app/StrictModeChecker.jsx';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -19,9 +20,6 @@ export default function Discover({ events }) {
     const itemRefs = useRef({}); // Create a map of refs for each event
     const [showScrollButton, setShowScrollButton] = useState(false);
     const scrollableListRef = useRef(null); // Ref for the <ul> element
-
-    // Removed the separate scrollToHash function as the logic is now inline in the useEffect
-    // const scrollToHash = () => { ... }
 
     // useEffect for handling scrolling to a hash fragment after events load
     useEffect(() => {
@@ -317,6 +315,7 @@ export default function Discover({ events }) {
                     );
                 })}
             </div>
+            <StrictModeChecker />
             <ul
                 ref={scrollableListRef}
                 className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mx-15 mx-3 lg:my-5 my-3 max-w-full transition-all overflow-y-auto'
