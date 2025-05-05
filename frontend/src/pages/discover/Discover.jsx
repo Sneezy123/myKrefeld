@@ -3,7 +3,6 @@ import debounce from 'lodash.debounce';
 import { useLocation } from 'react-router-dom';
 import '../../app/App.css';
 import BackToTopButton from '../../components/BackToTopButton.jsx'; // Pfad anpassen falls nötig
-import StrictModeChecker from '../../app/StrictModeChecker.jsx';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -315,7 +314,6 @@ export default function Discover({ events }) {
                     );
                 })}
             </div>
-            <StrictModeChecker />
             <ul
                 ref={scrollableListRef}
                 className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mx-15 mx-3 lg:my-5 my-3 max-w-full transition-all overflow-y-auto'

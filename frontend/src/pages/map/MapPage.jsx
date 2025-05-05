@@ -57,11 +57,9 @@ export default function MapPage({ events }) {
                 )
                 .addTo(map);
         });
-        console.log('Map created!');
 
         return () => {
             map.remove();
-            console.log('Map removed');
         };
     }, [events]);
 

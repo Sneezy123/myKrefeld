@@ -31,6 +31,21 @@ export default function App() {
         fetchEvents();
     }, []);
 
+    // Memoize the Map element prop. It only recreates if 'events' changes.
+    const mapElement = useMemo(() => <Map events={events} />, [events]);
+
+    // Memoize the Discover element prop. It only recreates if 'events' changes.
+    const discoverElement = useMemo(
+        () => <Discover events={events} />,
+        [events]
+    );
+
+    // Memoize the NavBar element prop. It doesn't depend on events, so it's created once.
+    const navBarElement = useMemo(() => <NavBar />, []);
+
+    // The NoPage component doesn't have props that change, so memoizing is optional but harmless.
+    const noPageElement = useMemo(() => <NoPage />, []);
+
     return (
         <>
             <meta
@@ -39,18 +54,12 @@ export default function App() {
             />
             <BrowserRouter>
                 <Routes>
-                    <Route path='/' element={<NavBar />}>
-                        <Route index element={<MapPage events={events} />} />
-                        <Route
-                            path='map'
-                            element={<MapPage events={events} />}
-                        />
-                        <Route
-                            path='discover'
-                            element={<Discover events={events} />}
-                        />
+                    <Route path='/' element={navBarElement}>
+                        <Route index element={mapElement} />
+                        <Route path='map' element={mapElement} />
+                        <Route path='discover' element={discoverElement} />
                     </Route>
-                    <Route path='*' element={<NoPage />} />
+                    <Route path='*' element={noPageElement} />
                 </Routes>
             </BrowserRouter>
         </>
