@@ -1,5 +1,5 @@
 import './App.css';
-import Map from '../pages/map/Map.jsx';
+import MapPage from '../pages/map/MapPage.jsx';
 import Discover from '../pages/discover/Discover.jsx';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ReactDOM from 'react-dom/client';
@@ -40,8 +40,11 @@ export default function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path='/' element={<NavBar />}>
-                        <Route index element={<Map events={events} />} />
-                        <Route path='map' element={<Map events={events} />} />
+                        <Route index element={<MapPage events={events} />} />
+                        <Route
+                            path='map'
+                            element={<MapPage events={events} />}
+                        />
                         <Route
                             path='discover'
                             element={<Discover events={events} />}

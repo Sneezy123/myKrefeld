@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import '../../app/App.css';
 
-function UserMarker() {
+function UserPositionMarker() {
     return (
         /* <svg
             height={10}
@@ -17,4 +17,4 @@ function UserMarker() {
         </span>
     );
 }
-export default memo(UserMarker);
+export default memo(UserPositionMarker);
