@@ -4,7 +4,7 @@ import Discover from '../pages/discover/Discover.jsx';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ReactDOM from 'react-dom/client';
 import { Outlet, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function App() {
     const [events, setEvents] = useState([]);
@@ -32,7 +32,7 @@ export default function App() {
     }, []);
 
     // Memoize the Map element prop. It only recreates if 'events' changes.
-    const mapElement = useMemo(() => <Map events={events} />, [events]);
+    const mapElement = useMemo(() => <MapPage events={events} />, [events]);
 
     // Memoize the Discover element prop. It only recreates if 'events' changes.
     const discoverElement = useMemo(
