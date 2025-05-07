@@ -1,6 +1,6 @@
 {
   "version": 8,
-  "metadata": {},
+  "metadata": {"maputnik:renderer": "mlgljs"},
   "sources": {
     "ne2_shaded": {
       "maxzoom": 6,
@@ -12,7 +12,7 @@
     },
     "openmaptiles": {
       "type": "vector",
-      "url": "https://tiles.openfreemap.org/planet"
+      "url": "https://api.maptiler.com/tiles/v3-openmaptiles/tiles.json?key=wq7vLl3lZf4W6yfjssqQ"
     }
   },
   "sprite": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm",
@@ -21,6 +21,7 @@
     {
       "id": "background",
       "type": "background",
+      "layout": {"visibility": "visible"},
       "paint": {"background-color": "rgb(242,243,240)"}
     },
     {
@@ -90,7 +91,7 @@
         ["==", ["get", "class"], "residential"]
       ],
       "paint": {
-        "fill-color": "rgba(217, 217, 206, 1)",
+        "fill-color": "rgba(200, 200, 200, 1)",
         "fill-opacity": [
           "interpolate",
           ["exponential", 0.6],
@@ -114,7 +115,7 @@
         ["==", ["get", "class"], "wood"]
       ],
       "paint": {
-        "fill-color": "rgb(220,224,220)",
+        "fill-color": "rgba(170, 186, 170, 1)",
         "fill-opacity": ["interpolate", ["linear"], ["zoom"], 8, 0, 12, 1]
       }
     },
@@ -137,11 +138,12 @@
       "type": "fill",
       "source": "openmaptiles",
       "source-layer": "building",
-      "minzoom": 12,
+      "minzoom": 15,
+      "layout": {"visibility": "visible"},
       "paint": {
         "fill-antialias": true,
-        "fill-color": "rgb(234, 234, 229)",
-        "fill-outline-color": "rgb(219, 219, 218)"
+        "fill-color": "rgba(213, 213, 213, 1)",
+        "fill-outline-color": "rgba(176, 176, 176, 1)"
       }
     },
     {
@@ -321,6 +323,7 @@
         ["match", ["geometry-type"], ["MultiPolygon", "Polygon"], true, false],
         ["==", ["get", "class"], "pier"]
       ],
+      "layout": {"visibility": "visible"},
       "paint": {"fill-antialias": true, "fill-color": "rgb(242,243,240)"}
     },
     {
@@ -877,6 +880,39 @@
       }
     },
     {
+      "id": "waterway_line_label",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "waterway",
+      "minzoom": 10,
+      "filter": [
+        "match",
+        ["geometry-type"],
+        ["LineString", "MultiLineString"],
+        true,
+        false
+      ],
+      "layout": {
+        "symbol-placement": "line",
+        "symbol-spacing": 350,
+        "text-field": [
+          "case",
+          ["has", "name:nonlatin"],
+          ["concat", ["get", "name:latin"], " ", ["get", "name:nonlatin"]],
+          ["coalesce", ["get", "name_en"], ["get", "name"]]
+        ],
+        "text-font": ["Noto Sans Italic"],
+        "text-letter-spacing": 0.2,
+        "text-max-width": 5,
+        "text-size": 14
+      },
+      "paint": {
+        "text-color": "hsl(0,0%,66%)",
+        "text-halo-color": "rgba(255,255,255,0.7)",
+        "text-halo-width": 1.5
+      }
+    },
+    {
       "id": "boundary_3",
       "type": "line",
       "source": "openmaptiles",
@@ -929,39 +965,6 @@
         "line-color": "hsl(0,0%,70%)",
         "line-dasharray": [1, 2],
         "line-width": ["interpolate", ["linear"], ["zoom"], 3, 1, 5, 1.2, 12, 3]
-      }
-    },
-    {
-      "id": "waterway_line_label",
-      "type": "symbol",
-      "source": "openmaptiles",
-      "source-layer": "waterway",
-      "minzoom": 10,
-      "filter": [
-        "match",
-        ["geometry-type"],
-        ["LineString", "MultiLineString"],
-        true,
-        false
-      ],
-      "layout": {
-        "symbol-placement": "line",
-        "symbol-spacing": 350,
-        "text-field": [
-          "case",
-          ["has", "name:nonlatin"],
-          ["concat", ["get", "name:latin"], " ", ["get", "name:nonlatin"]],
-          ["coalesce", ["get", "name_en"], ["get", "name"]]
-        ],
-        "text-font": ["Noto Sans Italic"],
-        "text-letter-spacing": 0.2,
-        "text-max-width": 5,
-        "text-size": 14
-      },
-      "paint": {
-        "text-color": "hsl(0,0%,66%)",
-        "text-halo-color": "rgba(255,255,255,0.7)",
-        "text-halo-width": 1.5
       }
     },
     {
@@ -1043,7 +1046,8 @@
         ],
         "text-font": ["Noto Sans Regular"],
         "text-rotation-alignment": "map",
-        "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13]
+        "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13],
+        "visibility": "visible"
       },
       "paint": {
         "text-color": "hsl(30,0%,62%)",
@@ -1078,7 +1082,8 @@
         ],
         "text-font": ["Noto Sans Regular"],
         "text-rotation-alignment": "map",
-        "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13]
+        "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13],
+        "visibility": "visible"
       },
       "paint": {
         "text-color": "#666",
@@ -1109,7 +1114,8 @@
         ],
         "text-font": ["Noto Sans Regular"],
         "text-rotation-alignment": "map",
-        "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13]
+        "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13],
+        "visibility": "visible"
       },
       "paint": {
         "text-color": "#666",
@@ -1150,7 +1156,8 @@
         "text-field": ["to-string", ["get", "ref"]],
         "text-font": ["Noto Sans Regular"],
         "text-rotation-alignment": "viewport",
-        "text-size": 10
+        "text-size": 10,
+        "visibility": "visible"
       }
     },
     {
@@ -1185,7 +1192,8 @@
         "text-field": ["to-string", ["get", "ref"]],
         "text-font": ["Noto Sans Regular"],
         "text-rotation-alignment": "viewport",
-        "text-size": 10
+        "text-size": 10,
+        "visibility": "visible"
       }
     },
     {
@@ -1220,7 +1228,8 @@
         "text-field": ["to-string", ["get", "ref"]],
         "text-font": ["Noto Sans Regular"],
         "text-rotation-alignment": "viewport",
-        "text-size": 10
+        "text-size": 10,
+        "visibility": "visible"
       }
     },
     {
@@ -1278,7 +1287,8 @@
         "text-letter-spacing": 0.1,
         "text-max-width": 9,
         "text-size": ["interpolate", ["linear"], ["zoom"], 8, 9, 12, 10],
-        "text-transform": "uppercase"
+        "text-transform": "uppercase",
+        "visibility": "visible"
       },
       "paint": {
         "text-color": "#333",
@@ -1568,6 +1578,19 @@
         "text-halo-color": "#fff",
         "text-halo-width": 1
       }
+    },
+    {
+      "id": "housenumbers",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "housenumber",
+      "minzoom": 0,
+      "layout": {
+        "symbol-z-order": "auto",
+        "text-pitch-alignment": "auto",
+        "text-field": ""
+      },
+      "paint": {"text-color": "#666"}
     }
   ],
   "id": "i43zn05as"

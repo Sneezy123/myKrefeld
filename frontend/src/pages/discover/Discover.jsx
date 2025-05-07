@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect, StrictMode } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import debounce from 'lodash.debounce';
-import { useLocation } from 'react-router-dom';
 import '../../app/App.css';
 import BackToTopButton from '../../components/BackToTopButton.jsx'; // Pfad anpassen falls nötig
 
@@ -13,10 +12,11 @@ import {
     faLocationDot,
     faChildren,
 } from '@fortawesome/free-solid-svg-icons';
+import { useLocation } from 'react-router-dom';
 
 export default function Discover({ events }) {
-    const location = useLocation();
     const itemRefs = useRef({}); // Create a map of refs for each event
+    const location = useLocation();
     const [showScrollButton, setShowScrollButton] = useState(false);
     const scrollableListRef = useRef(null); // Ref for the <ul> element
 
