@@ -25,10 +25,7 @@ export default function MapPage({ events }) {
             zoom: 12.95, // starting zoom
             minZoom: 12,
         });
-        mapRef.current.addControl(
-            new maplibregl.NavigationControl({ visualizePitch: true }),
-            'top-right'
-        );
+        mapRef.current.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         // Add geolocate control to the map.
         mapRef.current.addControl(
             new maplibregl.GeolocateControl({
@@ -64,9 +61,7 @@ export default function MapPage({ events }) {
                         focusAfterOpen: false,
                     })
                         .setLngLat([event.venue?.lon, event.venue?.lat])
-                        .setHTML(
-                            `<a href="/discover/#${event.id}"><strong>${event.title}</strong></a>`
-                        )
+                        .setHTML(`<a href="/discover/#${event.id}"><strong>${event.title}</strong></a>`)
                 );
             eventMarkers.push(eventMarker);
             eventMarker.addTo(map);
