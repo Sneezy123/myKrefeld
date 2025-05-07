@@ -22,36 +22,23 @@ async function updateEvents() {
     try {
         const today = new Date().toISOString().split('T')[0];
         const urlBase = `https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events`;
-        const { data: first } = await axios.get(
-            `${urlBase}?page=1&per_page=100&start_date=${today}`
-        );
+        const { data: first } = await axios.get(`${urlBase}?page=1&per_page=100&start_date=${today}`);
         const totalPages = first.total_pages;
 
         for (let i = 1; i <= totalPages; i++) {
-            const { data } = await axios.get(
-                `${urlBase}?page=${i}&per_page=100&start_date=${today}`
-            );
+            const { data } = await axios.get(`${urlBase}?page=${i}&per_page=100&start_date=${today}`);
             for (const ev of data.events) {
-                const addr = [
-                    ev.venue?.address || '',
-                    ev.venue?.city || '',
-                    'Germany',
-                ]
-                    .filter(Boolean)
-                    .join(', ');
+                const addr = [ev.venue?.address || '', ev.venue?.city || '', 'Germany'].filter(Boolean).join(', ');
                 const geo =
                     (
-                        await axios.get(
-                            `https://nominatim.openstreetmap.org/search`,
-                            {
-                                params: {
-                                    q: addr,
-                                    'accept-language': 'de',
-                                    countrycodes: 'de',
-                                    format: 'json',
-                                },
-                            }
-                        )
+                        await axios.get(`https://nominatim.openstreetmap.org/search`, {
+                            params: {
+                                q: addr,
+                                'accept-language': 'de',
+                                countrycodes: 'de',
+                                format: 'json',
+                            },
+                        })
                     ).data[0] || {};
 
                 await Event.findOneAndUpdate(
@@ -81,6 +68,9 @@ async function updateEvents() {
                             lon: parseFloat(geo.lon) || 0,
                         },
                         cost: ev.cost || '',
+                        categories: ev.categories != [] ? ev.categories.map((cat) => cat.name) : [],
+                        tags: ev.tags != [] ? ev.tags.map((tag) => tag.name) : [],
+                        sourceURL: ev.rest_url.match('^h(ttp)s?:/{2}[a-z0-9-.]+')[0],
                     },
                     { upsert: true, new: true }
                 );

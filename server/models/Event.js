@@ -26,6 +26,14 @@ const eventSchema = new Schema({
         lon: { type: Number, required: true },
     },
     cost: { type: String, required: true },
+    categories: { type: [String] },
+    tags: { type: [String] },
+    sourceURL: { type: String, match: '^h(ttp)s?:/{2}[a-z0-9-.]+' },
+    addedToDB: {
+        type: Date,
+        immutable: true,
+        default: () => Date.now(),
+    },
 });
 
 const Event = mongoose.model('Event', eventSchema);
