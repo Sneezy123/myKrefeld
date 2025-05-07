@@ -27,7 +27,8 @@ export default function EventCard({ event, ref }) {
                     <li
                         ref={(el) => (ref.current[event.id] = el)} // Assign ref to each <li>
                         onClick={() => {
-                            setIsOpen(true);
+                            /* setIsOpen(true); */
+                            // TODO: Implement nice modal.
                         }}
                         className='relative rounded-3xl border p-6  border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow min-h-[400px] flex flex-col cursor-pointer'
                     >
