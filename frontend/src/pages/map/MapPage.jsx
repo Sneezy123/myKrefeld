@@ -88,5 +88,9 @@ export default function MapPage({ events }) {
         }));
     };
 
-    return <div className='w-full h-full inline-0 right-0' ref={mapCRef}></div>;
+    return (
+        <div className='absolute inset-0'>
+            <div className='w-full h-full' ref={mapCRef}></div>
+        </div>
+    );
 }
