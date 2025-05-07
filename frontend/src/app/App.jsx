@@ -24,6 +24,7 @@ export default function App() {
                 setEvents(data);
             } catch (error) {
                 console.error('Error fetching events:', error);
+                setEvents([-1]);
             }
         };
 
@@ -69,7 +70,7 @@ function NavBar() {
     return (
         <>
             <div className='flex'>
-                <div className='bg-white h-dvh flex flex-col w-15 md:w-25/100 max-w-70 flex-shrink-0 drop-shadow-xl/10 transition-all z-10'>
+                <div className='bg-white h-dvh flex flex-col w-15 md:w-25/100 max-w-70 flex-shrink-0 drop-shadow-xl/10 transition-all z-1'>
                     <div className='my-2'>
                         <div className='flex w-full items-center justify-center'>
                             <img src='#' alt='Logo' />
@@ -109,7 +110,7 @@ function NavBar() {
 
                 <div
                     id='scroll-container'
-                    className='h-dvh grow bg-stone-100 overflow-y-scroll'
+                    className='h-dvh grow bg-white overflow-y-scroll'
                 >
                     <Outlet />
                 </div>
