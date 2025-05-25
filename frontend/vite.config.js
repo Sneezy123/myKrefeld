@@ -7,6 +7,11 @@ import path from 'path';
 
 export default defineConfig({
     plugins: [react(), basicSsl(), tailwindcss()],
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './'),
+        },
+    },
     build: {
         outDir: 'dist',
         assetsDir: 'assets',

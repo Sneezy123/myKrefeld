@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import debounce from 'lodash.debounce';
-import '../../app/App.css';
 import BackToTopButton from '../../components/BackToTopButton.jsx'; // Pfad anpassen falls nötig
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-import { faClock, faStar } from '@fortawesome/free-regular-svg-icons';
 import {
-    faCoins,
-    faPlus,
-    faLocationDot,
-    faChildren,
-} from '@fortawesome/free-solid-svg-icons';
+    Clock,
+    TicketPercent,
+    Sparkles,
+    MapPinned,
+    Radar,
+    CirclePlus,
+    Baby,
+} from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import EventCard from '../../components/EventCard.jsx';
 
@@ -81,16 +80,17 @@ export default function Discover({ events }) {
         'Familienfreundlich',
     ];
     const filterSymbols = [
-        faClock, // Represents time-related filters
-        faCoins, // Represents cost-related filters
-        faStar, // Represents popular events
-        faPlus, // Represents new events
-        faLocationDot, // Represents nearby events
-        faChildren, // Represents family-friendly events
+        Clock, // Represents time-related filters
+        TicketPercent, // Represents cost-related filters
+        Sparkles, // Represents popular events
+        CirclePlus, // Represents new events
+        Radar, // MapPinned Represents nearby events
+        Baby, // Represents family-friendly events
     ];
 
     // Function to handle filtering events
     const filterEvents = (filterId) => {
+        let t1 = Date.now();
         console.log(`Filtering events for: ${filterId}`);
         if (activeFilter == filterId) {
             // Reset active filter
@@ -136,6 +136,9 @@ export default function Discover({ events }) {
         } else if (filterId === 5) {
             // Filter events based on their family-friendliness
         }
+        let t2 = Date.now();
+
+        console.log(t2 - t1);
     };
 
     // Update filteredEvents when the original events prop changes
@@ -172,35 +175,21 @@ export default function Discover({ events }) {
 
     /* -------------------------------- useEffects End ------------------------------- */
 
-    if (events[0] == -1) {
-        return (
-            <div className='flex flex-col items-center justify-center h-full w-full'>
-                <span className='text-black text-2xl font-bold'>
-                    Die Veranstaltungen konnten nicht geladen werden.
-                </span>
-                <span className='text-gray-500 text-xl'>
-                    Überprüfe deine Internetverbindung und versuche es später
-                    erneut.
-                </span>
-            </div>
-        );
-    }
     // Render the main content
     return (
-        <div className='bg-white p-4 w-full relative'>
-            <h1 className='font-stretch-semi-expandedd text-4xl ml-3 lg:ml-15'>
+        <div className='py-4 w-full @container'>
+            <h1 className='font-stretch-semi-expanded text-4xl mx-10 lg:ml-15 text-center lg:text-left'>
                 Entdecke aktuelle Veranstaltungen
             </h1>
-            <h2 className='font-stretch-semi-expanded text-lg ml-3 lg:ml-15 text-stone-400 font-light'>
+            <h2 className='font-stretch-semi-expanded text-lg mx-10 lg:ml-15 text-stone-400 font-light text-center lg:text-left'>
                 Krefeld und Umgebung
             </h2>
-            <div className='h-full p-3 mx-0 lg:mx-12 my-2 flex flex-row max-w-full overflow-x-scroll scrollbar-fade'>
+            <div className='py-3 mx-10 lg:mx-12 my-2 flex flex-row max-w-full overflow-x-scroll scrollbar-hidden'>
                 {filterTexts.map((text, index) => {
-                    const symbol = filterSymbols[index];
                     return (
                         <FilterCard
                             key={index}
-                            symbol={symbol}
+                            symbol={filterSymbols[index]}
                             text={text}
                             id={index}
                             isActive={activeFilter === index}
@@ -209,19 +198,39 @@ export default function Discover({ events }) {
                     );
                 })}
             </div>
-            <ul
-                ref={scrollableListRef}
-                className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:mx-15 mx-3 lg:my-5 my-3 max-w-full transition-all overflow-visible'
-            >
-                {filteredEvents.map((event, idx) => (
-                    <EventCard
-                        key={event?.id ? event.id : idx}
-                        event={event}
-                        ref={itemRefs}
-                    />
-                ))}
-            </ul>
-            <BackToTopButton />
+            {events[0] == -1 ?
+                <div className='flex flex-col w-full grow'>
+                    <span className='text-black text-2xl font-bold mx-10 lg:mx-15 text-center my-2'>
+                        Die Veranstaltungen konnten nicht geladen werden.
+                    </span>
+                    <span className='text-gray-500 text-xl mx-10 lg:mx-15 text-center mb-5'>
+                        Überprüfe deine Internetverbindung und versuche es
+                        später erneut.
+                    </span>
+                    <span className='text-gray-500 font-[350] text-xl mx-10 lg:mx-15 text-center'>
+                        Wenn das Problem weiterhin besteht, kontaktiere den{' '}
+                        <span className='underline underline-offset-2 decoration-accent-500'>
+                            Support
+                        </span>
+                        .
+                    </span>
+                </div>
+            :   <>
+                    <ul
+                        ref={scrollableListRef}
+                        className=' grid grid-cols-1 @xl:grid-cols-1 @4xl:grid-cols-2 @7xl:grid-cols-3 gap-6 lg:mx-15 mx-10 lg:my-5 my-3 max-w-full  overflow-visible'
+                    >
+                        {filteredEvents.map((event, idx) => (
+                            <EventCard
+                                key={event?.id ? event.id : idx}
+                                event={event}
+                                ref={itemRefs}
+                            />
+                        ))}
+                    </ul>
+                    <BackToTopButton />
+                </>
+            }
         </div>
     );
 }
@@ -229,9 +238,7 @@ export default function Discover({ events }) {
 // Component for rendering individual filter cards
 function FilterCard({ symbol, text, id, isActive, filterEvents }) {
     // Create the icon element
-    const symbolIcon = (
-        <FontAwesomeIcon icon={symbol} className='mr-2' size='lg' />
-    );
+    const LucideSymbolIcon = symbol;
 
     // Replace spaces in text with non-breaking spaces
     const noBreakSpaceText = text.replace(/ /g, '\u00A0');
@@ -243,12 +250,12 @@ function FilterCard({ symbol, text, id, isActive, filterEvents }) {
                 className={`mr-3 rounded-3xl border p-2 pl-3 pr-4
                 ${
                     isActive ?
-                        'border-indigo-200 bg-indigo-50 filter drop-shadow-lg text-indigo-600'
+                        'border-accent-200 bg-accent-50 filter drop-shadow-lg text-accent-600'
                     :   'border-stone-200 bg-white filter drop-shadow-md hover:drop-shadow-lg'
                 }
                 transition-all flex flex-row items-center`}
             >
-                {symbolIcon}
+                <LucideSymbolIcon className='mr-2 size-5' />
                 <p className='font-stretch-semi-expanded'>{noBreakSpaceText}</p>
             </button>
         </>

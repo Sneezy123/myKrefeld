@@ -1,6 +1,5 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import '../../app/App.css';
 import mapJSON from './maplibre-style.json';
 
 import maplibregl, { Marker } from 'maplibre-gl';
@@ -25,7 +24,10 @@ export default function MapPage({ events }) {
             zoom: 12.95, // starting zoom
             minZoom: 12,
         });
-        mapRef.current.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+        mapRef.current.addControl(
+            new maplibregl.NavigationControl({ visualizePitch: true }),
+            'top-right'
+        );
         // Add geolocate control to the map.
         mapRef.current.addControl(
             new maplibregl.GeolocateControl({
@@ -61,7 +63,9 @@ export default function MapPage({ events }) {
                         focusAfterOpen: false,
                     })
                         .setLngLat([event.venue?.lon, event.venue?.lat])
-                        .setHTML(`<a href="/discover/#${event.id}"><strong>${event.title}</strong></a>`)
+                        .setHTML(
+                            `<a href="/discover/#${event.id}"><strong>${event.title}</strong></a>`
+                        )
                 );
             eventMarkers.push(eventMarker);
             eventMarker.addTo(map);
@@ -75,13 +79,6 @@ export default function MapPage({ events }) {
             console.log('Markers removed');
         };
     }, [events]);
-
-    const togglePopup = (eventId) => {
-        setPopupStates((prevState) => ({
-            ...prevState,
-            [eventId]: !prevState[eventId],
-        }));
-    };
 
     return <div className='w-full h-full relative' ref={mapCRef}></div>;
 }

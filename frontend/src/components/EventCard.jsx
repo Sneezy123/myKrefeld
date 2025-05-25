@@ -6,6 +6,15 @@ import {
     DialogTitle,
     DialogBackdrop,
 } from '@headlessui/react';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export default function EventCard({ event, ref }) {
@@ -23,38 +32,36 @@ export default function EventCard({ event, ref }) {
     return (
         <>
             {!isSkeleton ?
-                <Link key={event?.id} to={`/discover?event-id=${event?.id}`}>
-                    <li
-                        ref={(el) => (ref.current[event.id] = el)} // Assign ref to each <li>
-                        onClick={() => {
-                            /* setIsOpen(true); */
-                            // TODO: Implement nice modal.
-                        }}
-                        className='relative rounded-3xl border p-6  border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow min-h-[400px] flex flex-col cursor-pointer'
+                <li
+                    ref={(el) => (ref.current[event.id] = el)} // Assign ref to each <li>
+                    onClick={() => {
+                        /* setIsOpen(true); */
+                        // TODO: Implement nice modal.
+                    }}
+                >
+                    <Link
+                        key={event?.id}
+                        to={`/discover?event-id=${event?.id}`}
                     >
                         {/* Front of the Card */}
-                        <div
-                            className={
-                                'w-full backface-hidden flex flex-col h-full'
-                            }
-                        >
+                        <Card className='w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'>
                             {/* Main content area - takes all available space but shrinks as needed */}
-                            <div className='flex-1'>
+                            <CardHeader>
                                 {event.image?.url !== '' ?
                                     <img
                                         src={event.image?.url}
                                         alt={event.title}
-                                        className='rounded-2xl mb-4 w-full h-40 object-cover'
+                                        className='rounded-xl mb-4 w-full h-40 object-cover'
                                     />
-                                :   <div className='rounded-2xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
+                                :   <div className='rounded-xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
                                 }
                                 {/* Event Title */}
-                                <h2
-                                    className='font-stretch-semi-expanded font-semibold mb-2 text-xl'
+                                <CardTitle
+                                    className='font-stretch-semi-expanded font-semibold mb-2 text-xl overflow-x-scroll scrollbar-hidden'
                                     dangerouslySetInnerHTML={{
                                         __html: event.title,
                                     }}
-                                ></h2>
+                                ></CardTitle>
                                 <TimeIndicator
                                     eventStart={new Date(
                                         event.start_date
@@ -63,7 +70,9 @@ export default function EventCard({ event, ref }) {
                                         event.end_date
                                     ).getTime()}
                                 />
-                                {/* Event Details */}
+                            </CardHeader>
+                            {/* Event Details */}
+                            <CardContent>
                                 <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-2'>
                                     <strong>Beginn:</strong>{' '}
                                     {new Date(event.start_date).toLocaleString(
@@ -113,28 +122,27 @@ export default function EventCard({ event, ref }) {
                                 :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
                                         <strong>Preis:</strong>{' '}
                                         {(
-                                            event.cost
-                                                ?.toString()
-                                                .toLowerCase() === '0' ||
-                                            event.cost
-                                                ?.toString()
-                                                .toLowerCase() === 'free' ||
-                                            event.cost
-                                                ?.toString()
-                                                .toLowerCase() ===
-                                                'kostenlos' ||
-                                            event.cost
-                                                ?.toString()
-                                                .toLowerCase() === 'frei'
+                                            [
+                                                '0',
+                                                '0€',
+                                                'frei',
+                                                'free',
+                                                'gratis',
+                                            ].includes(
+                                                event.cost
+                                                    ?.toString()
+                                                    .toLowerCase()
+                                            )
                                         ) ?
                                             'Gratis'
-                                        :   event.cost}
+                                        :   `${event.cost?.toString().match(/\d+.?,?\d*/) ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[1] + ',' + (event.cost?.toString().match(/(\d+).?,?(\d*)/)[2].length === 1 ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[2] + '0' : event.cost?.toString().match(/(\d+).?,?(\d*)/)[2]) : ['Is Null'][0]} €`
+                                        }
                                     </p>
                                 }
-                            </div>
-                        </div>
-                    </li>
-                </Link>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </li>
             :   <SkeletonCard />}
             <Dialog open={isOpen} onClose={closeDialog}>
                 <DialogBackdrop className='fixed inset-0 bg-black/70 w-full h-full z-1' />
@@ -170,9 +178,14 @@ function TimeIndicator({ eventStart, eventEnd }) {
 
     useEffect(() => {
         // Update time every second
-        const intervalId = setInterval(() => {
-            setCurrentTime(Date.now());
-        }, 1000);
+        const intervalId = setInterval(
+            () => {
+                setCurrentTime(Date.now());
+            },
+            activeNumber === 0 ?
+                getTimeUntilString(currentTime, eventStart)[1]
+            :   getTimeUntilString(currentTime, eventEnd)[1]
+        );
 
         // Cleanup interval on component unmount
         return () => clearInterval(intervalId);
@@ -191,9 +204,9 @@ function TimeIndicator({ eventStart, eventEnd }) {
     var textContent = `Ein Fehler ist aufgetreten.`;
 
     if (activeNumber === 0) {
-        textContent = `Beginnt in ${getTimeUntilString(currentTime, eventStart)}`;
+        textContent = `Beginnt in ${getTimeUntilString(currentTime, eventStart)[0]}`;
     } else if (activeNumber === 1) {
-        textContent = `Endet in ${getTimeUntilString(currentTime, eventEnd)}`;
+        textContent = `Endet in ${getTimeUntilString(currentTime, eventEnd)[0]}`;
     } else if (activeNumber === 2) {
         textContent = `Zu Ende`;
     }
@@ -205,7 +218,7 @@ function TimeIndicator({ eventStart, eventEnd }) {
                     className={`relative mr-2 flex size-2 ${activeNumber === 0 ? '' : 'hidden'}`}
                     title='Diese Veranstaltung hat noch nicht begonnen.'
                 >
-                    <span className='absolute inline-flex h-full w-full rounded-full bg-sky-500 opacity-75'></span>
+                    <span className='relative inline-flex size-2 rounded-full bg-sky-400'></span>
                 </span>
 
                 <span
@@ -254,47 +267,72 @@ function getTimeUntilString(now, date) {
     );
 
     if (yearsFloored > 0) {
-        return `${yearsFloored} ${yearsFloored === 1 ? 'Jahr' : 'Jahre'} ${monthsRounded - yearsFloored * 12} ${monthsRounded - yearsFloored * 12 === 1 ? 'Monat' : 'Monate'}`;
+        return [
+            `${yearsFloored} ${yearsFloored === 1 ? 'Jahr' : 'Jahre'} ${monthsRounded - yearsFloored * 12} ${monthsRounded - yearsFloored * 12 === 1 ? 'Monat' : 'Monate'}`,
+            2.628e9,
+        ];
     } else if (monthsFloored > 0) {
-        return `${monthsFloored} ${monthsFloored === 1 ? 'Monat' : 'Monate'} ${Math.floor(weeksRounded - monthsFloored * (365.25 / 84))} ${Math.floor(weeksRounded - monthsFloored * (365.25 / 84)) === 1 ? 'Woche' : 'Wochen'}`;
+        return [
+            `${monthsFloored} ${monthsFloored === 1 ? 'Monat' : 'Monate'} ${Math.floor(weeksRounded - monthsFloored * (365.25 / 84))} ${Math.floor(weeksRounded - monthsFloored * (365.25 / 84)) === 1 ? 'Woche' : 'Wochen'}`,
+            6.048e8,
+        ];
     } else if (weeksFloored > 0) {
-        return `${weeksFloored} ${weeksFloored === 1 ? 'Woche' : 'Wochen'} ${daysRounded - weeksFloored * 7} ${daysRounded - weeksFloored * 7 === 1 ? 'Tag' : 'Tagen'}`;
+        return [
+            `${weeksFloored} ${weeksFloored === 1 ? 'Woche' : 'Wochen'} ${daysRounded - weeksFloored * 7} ${daysRounded - weeksFloored * 7 === 1 ? 'Tag' : 'Tagen'}`,
+            8.64e7,
+        ];
     } else if (daysFloored > 0) {
-        return `${daysFloored} ${daysFloored === 1 ? 'Tag' : 'Tagen'} ${hoursRounded - daysFloored * 24} ${hoursRounded - daysFloored * 24 === 1 ? 'Stunde' : 'Stunden'}`;
+        return [
+            `${daysFloored} ${daysFloored === 1 ? 'Tag' : 'Tagen'} ${hoursRounded - daysFloored * 24} ${hoursRounded - daysFloored * 24 === 1 ? 'Stunde' : 'Stunden'}`,
+            3.6e6,
+        ];
     } else if (hoursFloored > 0) {
-        return `${hoursFloored} ${hoursFloored === 1 ? 'Stunde' : 'Stunden'} ${minutesRounded - hoursFloored * 60} ${minutesRounded - hoursFloored * 60 === 1 ? 'Minute' : 'Minuten'}`;
+        return [
+            `${hoursFloored} ${hoursFloored === 1 ? 'Stunde' : 'Stunden'} ${minutesRounded - hoursFloored * 60} ${minutesRounded - hoursFloored * 60 === 1 ? 'Minute' : 'Minuten'}`,
+            60000,
+        ];
     } else if (minutesFloored > 0) {
-        return `${minutesRounded} ${minutesRounded === 1 ? 'Minute' : 'Minuten'}`;
+        return [
+            `${minutesRounded} ${minutesRounded === 1 ? 'Minute' : 'Minuten'}`,
+            1000,
+        ];
     } else {
-        return `${secondsRounded} ${secondsRounded === 1 ? 'Sekunde' : 'Sekunden'}`;
+        return [
+            `${secondsRounded} ${secondsRounded === 1 ? 'Sekunde' : 'Sekunden'}`,
+            500,
+        ];
     }
 }
 function SkeletonCard() {
     return (
-        <li className='relative rounded-3xl border p-6 border-stone-200 bg-white shadow-md hover:shadow-lg transition-shadow min-h-[400px] flex flex-col cursor-pointer'>
-            <div
+        <li>
+            <Card
                 className={
-                    'w-full backface-hidden flex flex-col h-full animate-pulse'
+                    'w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'
                 }
             >
-                {/* Image */}
-                <div className='rounded-2xl mb-5.5 w-full h-40 object-cover bg-stone-200'></div>{' '}
-                {/* Title */}
-                <div>
-                    <div className='rounded-2xl mb-3 w-full h-4 bg-stone-200'></div>
-                    <div className='rounded-2xl mb-13.5 w-3/7 h-4 bg-stone-200'></div>
-                </div>
-                {/* Start */}
-                <div className='rounded-2xl mb-2 w-1/2 h-3 bg-stone-200'></div>
-                {/* End */}
-                <div className='rounded-2xl mb-4 w-2/5 h-3 bg-stone-200'></div>
-                {/* Venue */}
-                <div>
-                    <div className='rounded-2xl mb-6 w-full h-3 bg-stone-200'></div>
-                </div>
-                {/* Cost */}
-                <div className='rounded-2xl mb-5 w-1/5 h-3 bg-stone-200'></div>
-            </div>
+                <CardHeader>
+                    {/* Image */}
+                    <Skeleton className='rounded-xl mb-5.5 w-full h-40 '></Skeleton>{' '}
+                    {/* Title */}
+                    <div>
+                        <Skeleton className='mb-3 w-full h-4'></Skeleton>
+                        <Skeleton className='mb-13.5 w-3/7 h-4'></Skeleton>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {/* Start */}
+                    <Skeleton className='mb-2 w-1/2 h-3'></Skeleton>
+                    {/* End */}
+                    <Skeleton className='mb-4 w-2/5 h-3'></Skeleton>
+                    {/* Venue */}
+                    <div>
+                        <Skeleton className='mb-6 w-full h-3'></Skeleton>
+                    </div>
+                    {/* Cost */}
+                    <Skeleton className='mb-5 w-1/5 h-3'></Skeleton>
+                </CardContent>
+            </Card>
         </li>
     );
 }
