@@ -56,7 +56,7 @@ export default function AppSidebar() {
                         <Command className='size-4' />
                     </div>
                     <span className='truncate font-semibold grow overflow-ellipsis'>
-                        Helsssssssssssssss
+                        myKrefeld
                     </span>
                 </SidebarHeader>
                 <SidebarContent>

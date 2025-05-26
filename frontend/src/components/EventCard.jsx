@@ -27,7 +27,8 @@ export default function EventCard({ event, ref }) {
         navigate('/discover');
     };
 
-    let isSkeleton = event ? false : true;
+    // let isSkeleton = event ? false : true;
+    let isSkeleton = true;
 
     return (
         <>
@@ -43,8 +44,8 @@ export default function EventCard({ event, ref }) {
                         key={event?.id}
                         to={`/discover?event-id=${event?.id}`}
                     >
-                        {/* Front of the Card */}
                         <Card className='w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'>
+                            {/* Front of the Card */}
                             {/* Main content area - takes all available space but shrinks as needed */}
                             <CardHeader>
                                 {event.image?.url !== '' ?
@@ -128,13 +129,14 @@ export default function EventCard({ event, ref }) {
                                                 'frei',
                                                 'free',
                                                 'gratis',
+                                                'kostenlos',
                                             ].includes(
                                                 event.cost
                                                     ?.toString()
                                                     .toLowerCase()
                                             )
                                         ) ?
-                                            'Gratis'
+                                            'Kostenlos'
                                         :   `${event.cost?.toString().match(/\d+.?,?\d*/) ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[1] + ',' + (event.cost?.toString().match(/(\d+).?,?(\d*)/)[2].length === 1 ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[2] + '0' : event.cost?.toString().match(/(\d+).?,?(\d*)/)[2]) : ['Is Null'][0]} €`
                                         }
                                     </p>
