@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
-    Description,
     Dialog,
-    DialogPanel,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
     DialogTitle,
-    DialogBackdrop,
-} from '@headlessui/react';
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import {
     Card,
     CardContent,
@@ -14,11 +16,12 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
-export default function EventCard({ event, ref }) {
-    let [isOpen, setIsOpen] = useState(false);
+export default function EventCard({ event }) {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -27,146 +30,136 @@ export default function EventCard({ event, ref }) {
         navigate('/discover');
     };
 
-    // let isSkeleton = event ? false : true;
-    let isSkeleton = true;
+    let isSkeleton = event ? false : true;
 
     return (
         <>
             {!isSkeleton ?
-                <li
-                    ref={(el) => (ref.current[event.id] = el)} // Assign ref to each <li>
-                    onClick={() => {
-                        /* setIsOpen(true); */
-                        // TODO: Implement nice modal.
-                    }}
-                >
-                    <Link
-                        key={event?.id}
-                        to={`/discover?event-id=${event?.id}`}
-                    >
-                        <Card className='w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'>
-                            {/* Front of the Card */}
-                            {/* Main content area - takes all available space but shrinks as needed */}
-                            <CardHeader>
-                                {event.image?.url !== '' ?
-                                    <img
-                                        src={event.image?.url}
-                                        alt={event.title}
-                                        className='rounded-xl mb-4 w-full h-40 object-cover'
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Link
+                            key={event?.id}
+                            to={`/discover?event-id=${event?.id}`}
+                        >
+                            <Card className='w-full h-[536px] shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'>
+                                {/* Front of the Card */}
+                                {/* Main content area - takes all available space but shrinks as needed */}
+                                <CardHeader>
+                                    {event.image?.url !== '' ?
+                                        <img
+                                            src={event.image?.url}
+                                            alt={event.title}
+                                            className='rounded-xl mb-4 w-full h-40 object-cover'
+                                        />
+                                    :   <div className='rounded-xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
+                                    }
+                                    {/* Event Title */}
+                                    <CardTitle
+                                        className='font-stretch-semi-expanded font-semibold mb-2 text-xl overflow-x-scroll scrollbar-hidden'
+                                        dangerouslySetInnerHTML={{
+                                            __html: DOMPurify.sanitize(
+                                                event.title
+                                            ),
+                                        }}
+                                    ></CardTitle>
+                                    <TimeIndicator
+                                        eventStart={new Date(
+                                            event.start_date
+                                        ).getTime()}
+                                        eventEnd={new Date(
+                                            event.end_date
+                                        ).getTime()}
                                     />
-                                :   <div className='rounded-xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
-                                }
-                                {/* Event Title */}
-                                <CardTitle
-                                    className='font-stretch-semi-expanded font-semibold mb-2 text-xl overflow-x-scroll scrollbar-hidden'
-                                    dangerouslySetInnerHTML={{
-                                        __html: event.title,
-                                    }}
-                                ></CardTitle>
-                                <TimeIndicator
-                                    eventStart={new Date(
-                                        event.start_date
-                                    ).getTime()}
-                                    eventEnd={new Date(
-                                        event.end_date
-                                    ).getTime()}
-                                />
-                            </CardHeader>
-                            {/* Event Details */}
-                            <CardContent>
-                                <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-2'>
-                                    <strong>Beginn:</strong>{' '}
-                                    {new Date(event.start_date).toLocaleString(
-                                        [],
-                                        {
+                                </CardHeader>
+                                {/* Event Details */}
+                                <CardContent>
+                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-2'>
+                                        <strong>Beginn:</strong>{' '}
+                                        {new Date(
+                                            event.start_date
+                                        ).toLocaleString([], {
                                             year: 'numeric',
                                             month: '2-digit',
                                             day: '2-digit',
                                             hour: '2-digit',
                                             minute: '2-digit',
-                                        }
-                                    )}
-                                    {' Uhr'}
-                                    <br />
-                                    <strong>Ende:</strong>{' '}
-                                    {new Date(event.end_date).toLocaleString(
-                                        [],
-                                        {
+                                        })}
+                                        {' Uhr'}
+                                        <br />
+                                        <strong>Ende:</strong>{' '}
+                                        {new Date(
+                                            event.end_date
+                                        ).toLocaleString([], {
                                             year: 'numeric',
                                             month: '2-digit',
                                             day: '2-digit',
                                             hour: '2-digit',
                                             minute: '2-digit',
-                                        }
-                                    )}
-                                    {' Uhr'}
-                                </p>
-                                {/* Venue */}
-                                {event.venue?.venue === '' ?
-                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                        <strong>Veranstaltungsort:</strong> k.A.
+                                        })}
+                                        {' Uhr'}
                                     </p>
-                                :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                        <strong>Veranstaltungsort:</strong>{' '}
-                                        {event.venue?.venue}:{' '}
-                                        <span className='font-light'>
-                                            {event.venue?.address},{' '}
-                                            {event.venue?.zip}{' '}
-                                            {event.venue?.city}
-                                        </span>
-                                    </p>
-                                }
-                                {event.cost === '' ?
-                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                        <strong>Preis:</strong> k.A.
-                                    </p>
-                                :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                        <strong>Preis:</strong>{' '}
-                                        {(
-                                            [
-                                                '0',
-                                                '0€',
-                                                'frei',
-                                                'free',
-                                                'gratis',
-                                                'kostenlos',
-                                            ].includes(
-                                                event.cost
-                                                    ?.toString()
-                                                    .toLowerCase()
-                                            )
-                                        ) ?
-                                            'Kostenlos'
-                                        :   `${event.cost?.toString().match(/\d+.?,?\d*/) ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[1] + ',' + (event.cost?.toString().match(/(\d+).?,?(\d*)/)[2].length === 1 ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[2] + '0' : event.cost?.toString().match(/(\d+).?,?(\d*)/)[2]) : ['Is Null'][0]} €`
-                                        }
-                                    </p>
-                                }
-                            </CardContent>
-                        </Card>
-                    </Link>
-                </li>
+                                    {/* Venue */}
+                                    {event.venue?.venue === '' ?
+                                        <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                            <strong>Veranstaltungsort:</strong>{' '}
+                                            k.A.
+                                        </p>
+                                    :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                            <strong>Veranstaltungsort:</strong>{' '}
+                                            {event.venue?.venue}:{' '}
+                                            <span className='font-light'>
+                                                {event.venue?.address},{' '}
+                                                {event.venue?.zip}{' '}
+                                                {event.venue?.city}
+                                            </span>
+                                        </p>
+                                    }
+                                    {event.cost === '' ?
+                                        <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                            <strong>Preis:</strong> k.A.
+                                        </p>
+                                    :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                            <strong>Preis:</strong>{' '}
+                                            {(
+                                                [
+                                                    '0',
+                                                    '0€',
+                                                    'frei',
+                                                    'free',
+                                                    'gratis',
+                                                    'kostenlos',
+                                                ].includes(
+                                                    event.cost
+                                                        ?.toString()
+                                                        .toLowerCase()
+                                                )
+                                            ) ?
+                                                'Kostenlos'
+                                            :   `${event.cost?.toString().match(/\d+.?,?\d*/) ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[1] + ',' + (event.cost?.toString().match(/(\d+).?,?(\d*)/)[2].length === 1 ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[2] + '0' : event.cost?.toString().match(/(\d+).?,?(\d*)/)[2]) : ['Is Null'][0]} €`
+                                            }
+                                        </p>
+                                    }
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    </DialogTrigger>
+                    <DialogContent className='w-2000'>
+                        <DialogHeader>
+                            <DialogTitle className=''>
+                                {event.title}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {event.sourceURL} &emsp; {event.id}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div
+                            dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(event.description),
+                            }}
+                        ></div>
+                    </DialogContent>
+                </Dialog>
             :   <SkeletonCard />}
-            <Dialog open={isOpen} onClose={closeDialog}>
-                <DialogBackdrop className='fixed inset-0 bg-black/70 w-full h-full z-1' />
-                <div className='fixed inset-0 flex w-screen items-center justify-center p-4 z-1'>
-                    <DialogPanel className='max-w-lg space-y-4 border bg-white p-12'>
-                        <DialogTitle className='font-bold'>
-                            Deactivate account
-                        </DialogTitle>
-                        <Description>
-                            This will permanently deactivate your account
-                        </Description>
-                        <p>
-                            Are you sure you want to deactivate your account?
-                            All of your data will be permanently removed.
-                        </p>
-                        <div className='flex gap-4'>
-                            <button onClick={closeDialog}>Cancel</button>
-                            <button onClick={closeDialog}>Deactivate</button>
-                        </div>
-                    </DialogPanel>
-                </div>
-            </Dialog>
         </>
     );
 }
@@ -337,4 +330,8 @@ function SkeletonCard() {
             </Card>
         </li>
     );
+}
+
+function giveMarkup(content) {
+    return { __html: DOMPurify.sanitize(content) };
 }

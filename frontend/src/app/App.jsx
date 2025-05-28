@@ -56,7 +56,7 @@ export default function App() {
             />
 
             <SidebarProvider /* defaultOpen={defaultOpen} */>
-                <SidebarInset id='scroll-container' className=''>
+                <SidebarInset className=''>
                     <Routes>
                         <Route path='/' element={<AppSidebar />}>
                             <Route
@@ -68,8 +68,11 @@ export default function App() {
                                 element={<MapPage events={events} />}
                             />
                             <Route
+                                id='scroll-discover'
                                 path='discover'
-                                element={<Discover events={events} />}
+                                element={
+                                    <Discover id='scroll-b' events={events} />
+                                }
                             />
                         </Route>
                         <Route path='/*' element={<NoPage />} />
