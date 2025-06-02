@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import debounce from 'lodash.debounce';
 import BackToTopButton from '@/src/components/BackToTopButton.jsx';
 import { AutoSizer, WindowScroller, List } from 'react-virtualized';
+import { Button } from '@/components/ui/button';
 
 import {
     Clock,
@@ -15,6 +16,8 @@ import {
 import { useLocation } from 'react-router-dom';
 import EventCard from '@/src/components/EventCard.jsx';
 import DebouncedAutoSizer from '@/src/components/DebouncedAutoSizer.jsx';
+import { Component } from '@/src/components/testChart';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 // Define FilterCard component (assuming it's in the same file or imported)
 function FilterCard({ symbol, text, id, isActive, filterEvents }) {
@@ -22,24 +25,26 @@ function FilterCard({ symbol, text, id, isActive, filterEvents }) {
     const noBreakSpaceText = text.replace(/ /g, '\u00A0');
 
     return (
-        <button
+        <Button
             onClick={() => filterEvents(id)}
-            className={`mr-3 rounded-3xl border p-2 pl-3 pr-4
+            variant='outline'
+            className={`mr-3 p-5
             ${
                 isActive ?
-                    'border-accent-200 bg-accent-50 filter drop-shadow-lg text-accent-600'
-                :   'border-stone-200 bg-white filter drop-shadow-md hover:drop-shadow-lg'
+                    'border-accent-200 bg-accent-50 filter  text-accent-600 hover:bg-accent-50/60 hover:text-accent-600'
+                :   'border-stone-200 bg-white filter  hover:'
             }
             transition-all flex flex-row items-center cursor-pointer`}
         >
             <LucideSymbolIcon className='mr-2 size-5' />
-            <p className='font-stretch-semi-expanded'>{noBreakSpaceText}</p>
-        </button>
+            {noBreakSpaceText}
+        </Button>
     );
 }
 
 export default function Discover({ events }) {
     const itemRefs = useRef({});
+    const listRef = useRef(null);
     const location = useLocation();
 
     // State for BackToTopButton visibility
@@ -54,11 +59,13 @@ export default function Discover({ events }) {
     // State to manage overall loading status
     const [isLoading, setIsLoading] = useState(true);
 
+    const [distanceArray, setDistanceArray] = useState([]);
+
     // Constants for card dimensions and grid gap
-    const CARD_ACTUAL_HEIGHT = 536;
+    const CARD_ACTUAL_HEIGHT = 560;
     const CARD_MIN_DESIRED_WIDTH = 400;
     const GRID_GAP = 24;
-    const SKELETON_COUNT = 9; // Number of skeletons to show during initial loading
+    const SKELETON_COUNT = 12; // Number of skeletons to show during initial loading
 
     // Filter texts and symbols
     const filterTexts = [
@@ -152,13 +159,14 @@ export default function Discover({ events }) {
 
     // Function to filter events based on filter ID
     const filterEvents = (filterId) => {
-        let t1 = Date.now();
-        console.log(`Filtering events for: ${filterId}`);
-
         // If the same filter is clicked again, deactivate it and show all events
         if (activeFilter === filterId) {
             setActiveFilter(null);
             setFilteredEvents(allEvents.current); // Reset to all events
+            if (listRef.current) {
+                // Assuming listRef is defined from previous fix
+                listRef.current.forceUpdateGrid();
+            }
             return;
         }
 
@@ -180,7 +188,8 @@ export default function Discover({ events }) {
                     cost === '0' ||
                     cost === 'free' ||
                     cost === 'kostenlos' ||
-                    cost === 'frei'
+                    cost === 'frei' ||
+                    cost === 'gratis'
                 );
             });
         } else if (filterId === 2) {
@@ -202,33 +211,100 @@ export default function Discover({ events }) {
             // Placeholder: This would involve getting user's current location and filtering events by distance.
             // For demonstration, return a random subset.
             const geoLocation = navigator.geolocation;
+            console.group('Geolocation filter');
+            console.log('Starts filter');
             if (geoLocation) {
-                geoLocation.getCurrentPosition(
-                    (position) => {
-                        console.log(
-                            'User location:',
-                            position.coords.latitude,
-                            position.coords.longitude
-                        );
-                        // Implement actual distance-based filtering here
-                        tempFilteredEvents = [...allEvents.current].filter(
-                            () => Math.random() > 0.5
-                        ); // Dummy filter
-                        setFilteredEvents(tempFilteredEvents);
-                    },
-                    (error) => {
-                        console.error('Error getting geolocation:', error);
-                        tempFilteredEvents = [...allEvents.current]; // Fallback to all events
-                        setFilteredEvents(tempFilteredEvents);
-                    }
-                );
+                console.log('Has geolocation');
+                if (distanceArray.length === 0) {
+                    console.log(
+                        'Length of distanceArray is 0. Getting position...'
+                    );
+                    geoLocation.getCurrentPosition(
+                        (position) => {
+                            console.log(
+                                'Position got:',
+                                position.coords.latitude,
+                                position.coords.longitude
+                            );
+
+                            console.log('Starting to sort');
+                            let tempFilteredEvents = [...allEvents.current]
+                                .map((event) => {
+                                    // Handle cases where venue or lat/lon might be missing
+                                    if (
+                                        !event.venue?.lat ||
+                                        !event.venue?.lon
+                                    ) {
+                                        return {
+                                            ...event,
+                                            _calculatedDistance: Infinity,
+                                        };
+                                    }
+
+                                    // Haversine Formula
+
+                                    const toRad = Math.PI / 180;
+                                    const latUser =
+                                        position.coords.latitude * toRad;
+                                    const latEvent = event.venue.lat * toRad;
+
+                                    const lonUser =
+                                        position.coords.longitude * toRad;
+                                    const lonEvent = event.venue.lon * toRad;
+
+                                    const deltaLat = latUser - latEvent;
+                                    const deltaLon = lonUser - lonEvent;
+
+                                    const earthRadius = 6371e3;
+
+                                    const sqChLenHalf =
+                                        Math.sin(deltaLat / 2) *
+                                            Math.sin(deltaLat / 2) +
+                                        Math.cos(latUser) *
+                                            Math.cos(latEvent) *
+                                            Math.sin(deltaLon / 2) *
+                                            Math.sin(deltaLon / 2);
+
+                                    const angularDist =
+                                        2 *
+                                        Math.atan2(
+                                            Math.sqrt(sqChLenHalf),
+                                            Math.sqrt(1 - sqChLenHalf)
+                                        );
+
+                                    const distance = earthRadius * angularDist;
+                                    return {
+                                        ...event,
+                                        _calculatedDistance: distance,
+                                    }; // Using _calculatedDistance as an example
+                                })
+                                .sort(
+                                    (a, b) =>
+                                        a._calculatedDistance -
+                                        b._calculatedDistance
+                                );
+                            console.log('Sorting finished');
+                            setDistanceArray(tempFilteredEvents);
+                            setFilteredEvents(tempFilteredEvents);
+                            console.log('Set distanceArray and filterEvents');
+
+                            if (listRef.current)
+                                listRef.current.forceUpdateGrid();
+                        },
+                        (error) => {
+                            console.error('Error getting geolocation:', error);
+                            tempFilteredEvents = [...allEvents.current]; // Fallback to all events
+                        }
+                    );
+                } else {
+                    console.log('Distance array exists');
+                    setFilteredEvents(distanceArray);
+                    if (listRef.current) listRef.current.recomputeRowHeights(0);
+                }
             } else {
                 console.warn('Geolocation is not supported by this browser.');
                 tempFilteredEvents = [...allEvents.current]; // Fallback to all events
-                setFilteredEvents(tempFilteredEvents);
             }
-            let t2 = Date.now();
-            console.log(t2 - t1);
             return; // Exit early as geolocation is async
         } else if (filterId === 5) {
             // Familienfreundlich (Family-friendly) - Placeholder, requires event data field
@@ -237,11 +313,9 @@ export default function Discover({ events }) {
                 (event) => event.is_family_friendly
             ); // Assuming a boolean field
         }
-
+        console.log('Setting filter');
         setFilteredEvents(tempFilteredEvents); // Apply filter
-
-        let t2 = Date.now();
-        console.log(t2 - t1);
+        console.groupEnd();
     };
 
     // Helper function to calculate maximum items per row
@@ -275,13 +349,6 @@ export default function Discover({ events }) {
         ) {
             result.push(i);
         }
-        console.log(
-            startIndex,
-            maxItemsPerRow,
-            itemsAmount,
-            result,
-            Math.min(startIndex + maxItemsPerRow, itemsAmount)
-        );
         return result;
     }
 
@@ -298,7 +365,6 @@ export default function Discover({ events }) {
     // Row renderer for react-virtualized List
     const rowRenderer = useCallback(
         ({ index, key, style, parent }) => {
-            console.log(index);
             const rowWidth = parent.props.width;
             const maxItemsPerRow = getMaxItemsAmountPerRow(
                 rowWidth,
@@ -370,6 +436,10 @@ export default function Discover({ events }) {
                                     event={eventData}
                                     isLoading={!eventData} // isLoading is true if eventData is null (for skeletons)
                                     style={{ width: '100%', height: '100%' }}
+                                    filterID={activeFilter}
+                                    distanceToMe={
+                                        eventData?._calculatedDistance || 0
+                                    }
                                     // Correctly assign ref to individual items using a callback
                                     ref={(el) => {
                                         if (eventData && eventData.id) {
@@ -405,21 +475,25 @@ export default function Discover({ events }) {
                 <h2 className='font-stretch-semi-expanded text-lg mx-10 lg:ml-15 text-stone-400 font-light text-center lg:text-left'>
                     Krefeld und Umgebung
                 </h2>
-                <div className='py-3 mx-10 lg:mx-12 my-2 flex flex-row max-w-full overflow-x-scroll scrollbar-hidden'>
-                    {filterTexts.map((text, index) => {
-                        // Assuming filterTexts and filterSymbols are available
-                        return (
-                            <FilterCard
-                                key={index}
-                                symbol={filterSymbols[index]}
-                                text={text}
-                                id={index}
-                                isActive={activeFilter === index}
-                                filterEvents={filterEvents}
-                            />
-                        );
-                    })}
-                </div>
+
+                <ScrollArea className='py-3 mx-10 lg:mx-15 gap-x-2 my-2 max-w-full'>
+                    <div className='flex flex-row w-max'>
+                        {filterTexts.map((text, index) => {
+                            // Assuming filterTexts and filterSymbols are available
+                            return (
+                                <FilterCard
+                                    key={index}
+                                    symbol={filterSymbols[index]}
+                                    text={text}
+                                    id={index}
+                                    isActive={activeFilter === index}
+                                    filterEvents={filterEvents}
+                                />
+                            );
+                        })}
+                    </div>
+                    <ScrollBar orientation='horizontal' />
+                </ScrollArea>
 
                 {/* IMPORTANT: If you want any initial content of the List to appear within this first viewport,
                     you might place a placeholder or the first few skeleton cards here,
@@ -429,7 +503,7 @@ export default function Discover({ events }) {
             </div>
             {/* SECTION 2: Main Scrollable Content (Event List or Error Message) */}
             {/* This section will cause the browser's main scrollbar to appear */}
-            {filteredEvents[0] === -1 ?
+            {events[0] === -1 ?
                 // Error state display
                 <div className='flex flex-col w-full grow my-5'>
                     {' '}
@@ -463,38 +537,7 @@ export default function Discover({ events }) {
                                     )
                                 );
 
-                                if (width === 0) {
-                                    // Height 0 check is less relevant with WindowScroller, but width 0 is still an issue
-                                    return isLoading ?
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    height: '100%',
-                                                    width: '100%',
-                                                }}
-                                            >
-                                                {'Lade Veranstaltungen...'}
-                                            </div>
-                                        :   null;
-                                }
-
-                                if (!isLoading && filteredEvents.length === 0) {
-                                    return (
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                height: '200px' /* Give some height so message is visible */,
-                                                width: '100%',
-                                            }}
-                                        >
-                                            {'Keine Veranstaltungen gefunden.'}
-                                        </div>
-                                    );
-                                }
+                                setIsLoading(width === 0);
 
                                 return (
                                     <WindowScroller>
@@ -510,6 +553,7 @@ export default function Discover({ events }) {
                                             >
                                                 <List
                                                     autoHeight // List will adjust its own DOM height to fit content
+                                                    ref={listRef}
                                                     width={width}
                                                     height={windowHeight} // Virtual viewport for List (window height)
                                                     scrollTop={scrollTop}

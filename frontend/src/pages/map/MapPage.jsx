@@ -54,15 +54,19 @@ export default function MapPage({ events }) {
 
             const root = createRoot(markerElement);
             root.render(<LocationMarker />);
+
+            const longitude = isNaN(event.venue?.lon) ? 0 : event.venue?.lon;
+            const latitude = isNaN(event.venue?.lat) ? 0 : event.venue?.lat;
+            console.log(longitude, latitude);
             let eventMarker = new maplibregl.Marker({ element: markerElement })
-                .setLngLat([event.venue?.lon, event.venue?.lat])
+                .setLngLat([longitude, latitude])
                 .setPopup(
                     new maplibregl.Popup({
                         closeOnClick: true,
                         offset: 10,
                         focusAfterOpen: false,
                     })
-                        .setLngLat([event.venue?.lon, event.venue?.lat])
+                        .setLngLat([longitude, latitude])
                         .setHTML(
                             `<a href="/discover/#${event.id}"><strong>${event.title}</strong></a>`
                         )

@@ -21,7 +21,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 
-export default function EventCard({ event }) {
+export default function EventCard({
+    event,
+    isLoading,
+    distanceToMe,
+    ...props
+}) {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -30,7 +35,7 @@ export default function EventCard({ event }) {
         navigate('/discover');
     };
 
-    let isSkeleton = event ? false : true;
+    let isSkeleton = isLoading;
 
     return (
         <>
@@ -41,7 +46,7 @@ export default function EventCard({ event }) {
                             key={event?.id}
                             to={`/discover?event-id=${event?.id}`}
                         >
-                            <Card className='w-full h-[536px] shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'>
+                            <Card className='w-full h-[560px] transition-shadow flex flex-col cursor-pointer'>
                                 {/* Front of the Card */}
                                 {/* Main content area - takes all available space but shrinks as needed */}
                                 <CardHeader>
@@ -135,19 +140,38 @@ export default function EventCard({ event }) {
                                                 )
                                             ) ?
                                                 'Kostenlos'
-                                            :   `${event.cost?.toString().match(/\d+.?,?\d*/) ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[1] + ',' + (event.cost?.toString().match(/(\d+).?,?(\d*)/)[2].length === 1 ? event.cost?.toString().match(/(\d+).?,?(\d*)/)[2] + '0' : event.cost?.toString().match(/(\d+).?,?(\d*)/)[2]) : ['Is Null'][0]} €`
+                                            :   `${parseFloat(
+                                                    event.cost
+                                                        ?.toString()
+                                                        .match(
+                                                            /\d+([\.,]\d+)?/
+                                                        )[0]
+                                                ).toLocaleString('de-DE', {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })} €`
                                             }
                                         </p>
                                     }
+                                    {typeof distanceToMe === 'number' &&
+                                        distanceToMe !== Infinity &&
+                                        distanceToMe !== 0 && (
+                                            <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                                <strong>Abstand:</strong>{' '}
+                                                {formatDistance(distanceToMe)}
+                                            </p>
+                                        )}
                                 </CardContent>
                             </Card>
                         </Link>
                     </DialogTrigger>
                     <DialogContent className='w-2000'>
                         <DialogHeader>
-                            <DialogTitle className=''>
-                                {event.title}
-                            </DialogTitle>
+                            <DialogTitle
+                                dangerouslySetInnerHTML={{
+                                    __html: DOMPurify.sanitize(event.title),
+                                }}
+                            ></DialogTitle>
                             <DialogDescription>
                                 {event.sourceURL} &emsp; {event.id}
                             </DialogDescription>
@@ -300,38 +324,40 @@ function getTimeUntilString(now, date) {
 }
 function SkeletonCard() {
     return (
-        <li>
-            <Card
-                className={
-                    'w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'
-                }
-            >
-                <CardHeader>
-                    {/* Image */}
-                    <Skeleton className='rounded-xl mb-5.5 w-full h-40 '></Skeleton>{' '}
-                    {/* Title */}
-                    <div>
-                        <Skeleton className='mb-3 w-full h-4'></Skeleton>
-                        <Skeleton className='mb-13.5 w-3/7 h-4'></Skeleton>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {/* Start */}
-                    <Skeleton className='mb-2 w-1/2 h-3'></Skeleton>
-                    {/* End */}
-                    <Skeleton className='mb-4 w-2/5 h-3'></Skeleton>
-                    {/* Venue */}
-                    <div>
-                        <Skeleton className='mb-6 w-full h-3'></Skeleton>
-                    </div>
-                    {/* Cost */}
-                    <Skeleton className='mb-5 w-1/5 h-3'></Skeleton>
-                </CardContent>
-            </Card>
-        </li>
+        <Card
+            className={
+                'w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'
+            }
+        >
+            <CardHeader>
+                {/* Image */}
+                <Skeleton className='rounded-xl mb-5.5 w-full h-40 '></Skeleton>{' '}
+                {/* Title */}
+                <div>
+                    <Skeleton className='mb-3 w-full h-4'></Skeleton>
+                    <Skeleton className='mb-13.5 w-3/7 h-4'></Skeleton>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {/* Start */}
+                <Skeleton className='mb-2 w-1/2 h-3'></Skeleton>
+                {/* End */}
+                <Skeleton className='mb-4 w-2/5 h-3'></Skeleton>
+                {/* Venue */}
+                <div>
+                    <Skeleton className='mb-6 w-full h-3'></Skeleton>
+                </div>
+                {/* Cost */}
+                <Skeleton className='mb-5 w-1/5 h-3'></Skeleton>
+            </CardContent>
+        </Card>
     );
 }
 
-function giveMarkup(content) {
-    return { __html: DOMPurify.sanitize(content) };
+function formatDistance(distanceInMeters) {
+    if (distanceInMeters < 1000) {
+        return `${Math.round(distanceInMeters).toLocaleString('de-DE')} m`;
+    } else {
+        return `${(Math.round(distanceInMeters / 100) / 10).toLocaleString('de-DE')} km`; // Round to one digit
+    }
 }
