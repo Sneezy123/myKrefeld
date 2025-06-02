@@ -61,18 +61,15 @@ export default function App() {
                         <Route path='/' element={<AppSidebar />}>
                             <Route
                                 index
-                                element={<MapPage events={events} />}
+                                element={<Discover events={events} />}
                             />
                             <Route
                                 path='map'
                                 element={<MapPage events={events} />}
                             />
                             <Route
-                                id='scroll-discover'
                                 path='discover'
-                                element={
-                                    <Discover id='scroll-b' events={events} />
-                                }
+                                element={<Discover events={events} />}
                             />
                         </Route>
                         <Route path='/*' element={<NoPage />} />
