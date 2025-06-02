@@ -165,7 +165,7 @@ export default function EventCard({
                             </Card>
                         </Link>
                     </DialogTrigger>
-                    <DialogContent className='w-2000'>
+                    <DialogContent>
                         <DialogHeader>
                             <DialogTitle
                                 dangerouslySetInnerHTML={{
