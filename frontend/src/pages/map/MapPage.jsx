@@ -1,6 +1,5 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import '../../app/App.css';
 import mapJSON from './maplibre-style.json';
 
 import maplibregl, { Marker } from 'maplibre-gl';
@@ -25,7 +24,10 @@ export default function MapPage({ events }) {
             zoom: 12.95, // starting zoom
             minZoom: 12,
         });
-        mapRef.current.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+        mapRef.current.addControl(
+            new maplibregl.NavigationControl({ visualizePitch: true }),
+            'top-right'
+        );
         // Add geolocate control to the map.
         mapRef.current.addControl(
             new maplibregl.GeolocateControl({
@@ -52,16 +54,22 @@ export default function MapPage({ events }) {
 
             const root = createRoot(markerElement);
             root.render(<LocationMarker />);
+
+            const longitude = isNaN(event.venue?.lon) ? 0 : event.venue?.lon;
+            const latitude = isNaN(event.venue?.lat) ? 0 : event.venue?.lat;
+            console.log(longitude, latitude);
             let eventMarker = new maplibregl.Marker({ element: markerElement })
-                .setLngLat([event.venue?.lon, event.venue?.lat])
+                .setLngLat([longitude, latitude])
                 .setPopup(
                     new maplibregl.Popup({
                         closeOnClick: true,
                         offset: 10,
                         focusAfterOpen: false,
                     })
-                        .setLngLat([event.venue?.lon, event.venue?.lat])
-                        .setHTML(`<a href="/discover/#${event.id}"><strong>${event.title}</strong></a>`)
+                        .setLngLat([longitude, latitude])
+                        .setHTML(
+                            `<a href="/discover/#${event.id}"><strong>${event.title}</strong></a>`
+                        )
                 );
             eventMarkers.push(eventMarker);
             eventMarker.addTo(map);
@@ -75,13 +83,6 @@ export default function MapPage({ events }) {
             console.log('Markers removed');
         };
     }, [events]);
-
-    const togglePopup = (eventId) => {
-        setPopupStates((prevState) => ({
-            ...prevState,
-            [eventId]: !prevState[eventId],
-        }));
-    };
 
     return <div className='w-full h-full relative' ref={mapCRef}></div>;
 }

@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import '../../app/App.css';
 
 function CustomMarker() {
     return (

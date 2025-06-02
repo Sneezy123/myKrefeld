@@ -19,6 +19,7 @@ export default function BackToTopButton() {
         const scrollContainer = document.getElementById('scroll-container');
         if (scrollContainer) {
             scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            console.log(scrollContainer.scrollTop);
         }
     };
 

@@ -6,8 +6,6 @@ import { connectToDatabase } from './lib/db.js';
 import Event from './models/Event.js';
 import 'dotenv/config';
 
-console.log(process.env.MONGODB_URI);
-
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -18,64 +16,276 @@ if (!uri) {
     process.exit(1);
 }
 
-async function updateEvents() {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        const urlBase = `https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events`;
-        const { data: first } = await axios.get(`${urlBase}?page=1&per_page=100&start_date=${today}`);
-        const totalPages = first.total_pages;
+async function getKrefeldEventList() {
+    const today = new Date().toISOString().split('T')[0];
+    const urlBaseKrefeld = `https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events`;
 
-        for (let i = 1; i <= totalPages; i++) {
-            const { data } = await axios.get(`${urlBase}?page=${i}&per_page=100&start_date=${today}`);
-            for (const ev of data.events) {
-                const addr = [ev.venue?.address || '', ev.venue?.city || '', 'Germany'].filter(Boolean).join(', ');
+    try {
+        let eventList = [];
+        const { data: first } = await axios.get(
+            `${urlBaseKrefeld}?&per_page=100&start_date=${today}&page=1`
+        );
+
+        const totalPages = first.total_pages;
+        const totalResults = first.total;
+        let eventIdx = 1;
+        let times = [];
+
+        for (let page = 1; page <= totalPages; page++) {
+            const { data } = await axios.get(
+                `${urlBaseKrefeld}?per_page=100&start_date=${today}&page=${page}`
+            );
+            for (const event of data.events) {
+                let t1 = Date.now();
+                const addr = [
+                    event.venue?.address || '',
+                    event.venue?.city || '',
+                    'Germany',
+                ]
+                    .filter(Boolean)
+                    .join(', ');
                 const geo =
                     (
-                        await axios.get(`https://nominatim.openstreetmap.org/search`, {
-                            params: {
-                                q: addr,
-                                'accept-language': 'de',
-                                countrycodes: 'de',
-                                format: 'json',
-                            },
-                        })
+                        await axios.get(
+                            `https://nominatim.openstreetmap.org/search`,
+                            {
+                                params: {
+                                    q: addr,
+                                    'accept-language': 'de',
+                                    countrycodes: 'de',
+                                    format: 'json',
+                                },
+                            }
+                        )
                     ).data[0] || {};
 
-                await Event.findOneAndUpdate(
-                    { id: ev.id },
-                    {
-                        id: ev.id,
-                        title: ev.title,
-                        description: ev.description,
-                        start_date: new Date(ev.start_date),
-                        end_date: new Date(ev.end_date),
-                        url: ev.url,
-                        image: {
-                            url: ev.image?.url || '',
-                            width: ev.image?.width || 0,
-                            height: ev.image?.height || 0,
-                        },
-                        website: ev.website || '',
-                        venue: {
-                            id: ev.venue?.id || 0,
-                            venue: ev.venue?.venue || '',
-                            address: ev.venue?.address || '',
-                            city: ev.venue?.city || '',
-                            zip: ev.venue?.zip || '',
-                            phone: ev.venue?.phone || '',
-                            website: ev.venue?.website || '',
-                            lat: parseFloat(geo.lat) || 0,
-                            lon: parseFloat(geo.lon) || 0,
-                        },
-                        cost: ev.cost || '',
-                        categories: ev.categories != [] ? ev.categories.map((cat) => cat.name) : [],
-                        tags: ev.tags != [] ? ev.tags.map((tag) => tag.name) : [],
-                        sourceURL: ev.rest_url.match('^h(ttp)s?:/{2}[a-z0-9-.]+')[0],
+                eventList.push({
+                    id: event.id,
+                    title: event.title,
+                    description: event.description,
+                    start_date: new Date(event.start_date),
+                    end_date: new Date(event.end_date),
+                    url: event.url,
+                    image: {
+                        url: event.image?.url,
+                        width: event.image?.width,
+                        height: event.image?.height,
                     },
-                    { upsert: true, new: true }
+                    website: event.website,
+                    venue: {
+                        id: event.venue?.id,
+                        venue: event.venue?.venue,
+                        address: event.venue?.address,
+                        city: event.venue?.city,
+                        zip: event.venue?.zip,
+                        phone: event.venue?.phone,
+                        website: event.venue?.website,
+                        lat: geo.lat,
+                        lon: geo.lon,
+                    },
+                    cost: event.cost,
+                    categories: event.categories.map((cat) => cat.name),
+                    tags: event.tags.map((tag) => tag.name),
+                    rest_url: event.rest_url,
+                });
+
+                let t2 = Date.now();
+
+                times.push(t2 - t1);
+
+                process.stdout.clearLine(0);
+                process.stdout.cursorTo(0);
+
+                process.stdout.write(
+                    `${page}, ${eventIdx}/${totalResults}\tETA: ${
+                        (times.reduce((a, b) => a + b) / times.length / 1000) *
+                        (totalResults - eventIdx)
+                    } s`
                 );
+                eventIdx++;
             }
         }
+        return eventList;
+    } catch (error) {
+        console.error('Events konnten nicht extern geladen werden: ', error);
+    }
+}
+
+async function getEventimEventList() {
+    const urlBaseEventim = `https://public-api.eventim.com/websearch/search/api/exploration/v1/products`;
+
+    try {
+        let eventList = [];
+        const { data: first } = await axios.get(
+            `${urlBaseEventim}?language=de&city_names=Krefeld&sort=DateAsc&top=50&page=1`
+        );
+
+        const totalPages = first.totalPages;
+        const totalResults = first.totalResults;
+        let productIdx = 1;
+        let times = [];
+
+        for (let page = 1; page <= totalPages; page++) {
+            const { data } = await axios.get(
+                `${urlBaseEventim}?language=de&city_names=Krefeld&sort=DateAsc&top=50&page=${page}`
+            );
+            for (const product of data.products) {
+                let t1 = Date.now();
+                const addr = [
+                    product.typeAttributes.liveEntertainment.location.name ||
+                        '',
+                    'Germany',
+                ]
+                    .filter(Boolean)
+                    .join(', ');
+                const geo =
+                    (
+                        await axios.get(
+                            `https://nominatim.openstreetmap.org/search`,
+                            {
+                                params: {
+                                    q: addr,
+                                    'accept-language': 'de',
+                                    countrycodes: 'de',
+                                    format: 'json',
+                                },
+                            }
+                        )
+                    ).data[0] || {};
+
+                const startDateDate = new Date(
+                    product.typeAttributes.liveEntertainment.startDate
+                );
+                const geoDisplayName =
+                    geo.display_name?.toString().split(', ') || '';
+                const geoDisplayNameObj = {
+                    name: geoDisplayName[0] || '',
+                    houseNumber: geoDisplayName[1] || '',
+                    streetName: geoDisplayName[2] || '',
+                    cityDistrict: geoDisplayName[3] || '',
+                    cityPart: geoDisplayName[4] || '',
+                    cityName: geoDisplayName[5] || '',
+                    region: geoDisplayName[6] || '',
+                    state: geoDisplayName[geoDisplayName.length - 3] || '',
+                    postCode: geoDisplayName[geoDisplayName.length - 2] || '',
+                    country: geoDisplayName[geoDisplayName.length - 1] || '',
+                };
+
+                eventList.push({
+                    id: product.productId,
+                    title: product.name,
+                    description: '',
+                    start_date: startDateDate,
+                    end_date: new Date(
+                        startDateDate.getFullYear(),
+                        startDateDate.getMonth(),
+                        startDateDate.getDate(),
+                        23,
+                        59,
+                        59,
+                        999
+                    ),
+                    url: product.link,
+                    image: {
+                        url: product.imageUrl,
+                        width: '',
+                        height: '',
+                    },
+                    website: '',
+                    venue: {
+                        id: '',
+                        venue: product.typeAttributes.liveEntertainment.location
+                            .name,
+                        address: `${geoDisplayNameObj.streetName} ${geoDisplayNameObj.houseNumber}`,
+                        city: geoDisplayNameObj.cityName,
+                        zip: geoDisplayNameObj.postCode,
+                        phone: '',
+                        website: '',
+                        lat: product.typeAttributes.liveEntertainment.location
+                            ?.geoLocation
+                            ? product.typeAttributes.liveEntertainment.location
+                                  ?.geoLocation.latitude
+                            : geo.lat,
+                        lon: product.typeAttributes.liveEntertainment.location
+                            ?.geoLocation
+                            ? product.typeAttributes.liveEntertainment.location
+                                  ?.geoLocation.longitude
+                            : geo.lon,
+                    },
+                    cost: product.price || '',
+                    categories: product.categories.map((cat) => cat.name),
+                    tags: product.tags,
+                    rest_url: product.link,
+                });
+                let t2 = Date.now();
+                times.push(t2 - t1);
+                process.stdout.clearLine(0);
+                process.stdout.cursorTo(0);
+
+                process.stdout.write(
+                    `${page}, ${productIdx}/${totalResults}\tETA: ${
+                        (times.reduce((a, b) => a + b) / times.length / 1000) *
+                        (totalResults - productIdx)
+                    } s`
+                );
+                productIdx++;
+            }
+        }
+        return eventList;
+    } catch (error) {
+        console.error('Events konnten nicht extern geladen werden: ', error);
+    }
+}
+async function updateEvents() {
+    console.log(
+        '------------- Start to create Krefeld Event List -------------'
+    );
+    const krefeldList = await getKrefeldEventList();
+    console.log(
+        '------------- Start to create Eventim Event List -------------'
+    );
+    const eventimList = await getEventimEventList();
+    const eventList = [krefeldList, eventimList].flat();
+    console.log('------------- Event List creation done! -------------');
+    try {
+        for (const eventObj of eventList) {
+            await Event.findOneAndUpdate(
+                { id: eventObj.id },
+                {
+                    id: eventObj.id,
+                    title: eventObj.title,
+                    description: eventObj.description,
+                    start_date: eventObj.start_date,
+                    end_date: eventObj.end_date,
+                    url: eventObj.url,
+                    image: {
+                        url: eventObj.image?.url || '',
+                        width: eventObj.image?.width || 0,
+                        height: eventObj.image?.height || 0,
+                    },
+                    website: eventObj.website || '',
+                    venue: {
+                        id: eventObj.venue?.id || 0,
+                        venue: eventObj.venue?.venue || '',
+                        address: eventObj.venue?.address || '',
+                        city: eventObj.venue?.city || '',
+                        zip: eventObj.venue?.zip || '',
+                        phone: eventObj.venue?.phone || '',
+                        website: eventObj.venue?.website || '',
+                        lat: parseFloat(eventObj.venue?.lat) || 0,
+                        lon: parseFloat(eventObj.venue?.lon) || 0,
+                    },
+                    cost: eventObj.cost || '',
+                    categories: eventObj.categories || [],
+                    tags: eventObj.tags || [],
+                    sourceURL: eventObj.rest_url.match(
+                        /^https?:\/\/(?:[^.]+\.)?([^.\/]+)\./
+                    )[1],
+                },
+                { upsert: true, new: true }
+            );
+        }
+
         console.log('Events erfolgreich aktualisiert');
     } catch (err) {
         console.error('Fehler beim Aktualisieren der Events:', err);
