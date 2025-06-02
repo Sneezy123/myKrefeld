@@ -2,12 +2,13 @@
 Run frontend:
 ```bash
 cd frontend
-npm run dev
+npm run dev -- --host
 ```
 
 Run server:
 ```bash
-node server.js
+cd server
+node index.js
 ```
 
 Ideal UX Flow:
