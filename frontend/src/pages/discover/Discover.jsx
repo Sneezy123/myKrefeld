@@ -47,9 +47,6 @@ export default function Discover({ events }) {
     const listRef = useRef(null);
     const location = useLocation();
 
-    // State for BackToTopButton visibility
-    const [showScrollButton, setShowScrollButton] = useState(false);
-
     // Stores the full list of events, used for filtering
     const allEvents = useRef([]);
 
@@ -139,23 +136,6 @@ export default function Discover({ events }) {
             }
         }
     }, [location.search, filteredEvents]); // Depend on filteredEvents to ensure they are loaded
-
-    // Debounced scroll handler for the BackToTopButton visibility
-    const debouncedHandleScrollButton = useCallback(
-        debounce(() => {
-            setShowScrollButton(window.scrollY > 300);
-        }, 100), // Debounce for 100ms
-        []
-    );
-
-    // Effect to attach and clean up scroll event listeners to the window
-    useEffect(() => {
-        window.addEventListener('scroll', debouncedHandleScrollButton);
-
-        return () => {
-            window.removeEventListener('scroll', debouncedHandleScrollButton);
-        };
-    }, [debouncedHandleScrollButton]);
 
     // Function to filter events based on filter ID
     const filterEvents = (filterId) => {
@@ -574,7 +554,7 @@ export default function Discover({ events }) {
                             }}
                         </DebouncedAutoSizer>
                     </div>
-                    {showScrollButton && <BackToTopButton />}
+                    <BackToTopButton />
                 </>
             }
         </>

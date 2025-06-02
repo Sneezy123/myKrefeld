@@ -92,7 +92,7 @@ function NoPage() {
             </h2>
             <p className='text-2xl font-stretch-semi-expanded'>
                 Zurück zur Startseite?{' '}
-                <Link to='/' className='underline text-accent'>
+                <Link to='/' className='underline text-accent-400'>
                     Hier
                 </Link>
             </p>
