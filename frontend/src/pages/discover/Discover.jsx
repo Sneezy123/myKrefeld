@@ -46,7 +46,7 @@ export default function Discover({ events }) {
     const [distanceArray, setDistanceArray] = useState([]);
 
     const CARD_ACTUAL_HEIGHT = 560;
-    const CARD_MIN_DESIRED_WIDTH = 400;
+    const CARD_MIN_DESIRED_WIDTH = 401;
     const GRID_GAP = 24;
     const SKELETON_COUNT = 12;
 
