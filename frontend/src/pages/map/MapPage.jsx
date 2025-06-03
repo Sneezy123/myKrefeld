@@ -2,9 +2,14 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import mapJSON from './maplibre-style.json';
 
-import maplibregl, { Marker } from 'maplibre-gl';
-import { useContext, useRef, useEffect } from 'react';
-import { renderToString } from 'react-dom/server';
+import {
+    Map,
+    Marker,
+    GeolocateControl,
+    NavigationControl,
+    Popup,
+} from 'maplibre-gl';
+import { useRef, useEffect } from 'react';
 import LocationMarker from './LocationMarker';
 import { createRoot } from 'react-dom/client';
 
@@ -17,7 +22,7 @@ export default function MapPage({ events }) {
     useEffect(() => {
         console.log('Map component mounted');
 
-        mapRef.current = new maplibregl.Map({
+        mapRef.current = new Map({
             container: mapCRef.current, // container id
             style: mapJSON,
             center: [6.565411, 51.334534], // starting position
@@ -25,12 +30,12 @@ export default function MapPage({ events }) {
             minZoom: 12,
         });
         mapRef.current.addControl(
-            new maplibregl.NavigationControl({ visualizePitch: true }),
+            new NavigationControl({ visualizePitch: true }),
             'top-right'
         );
         // Add geolocate control to the map.
         mapRef.current.addControl(
-            new maplibregl.GeolocateControl({
+            new GeolocateControl({
                 positionOptions: {
                     enableHighAccuracy: true,
                 },
@@ -58,10 +63,10 @@ export default function MapPage({ events }) {
             const longitude = isNaN(event.venue?.lon) ? 0 : event.venue?.lon;
             const latitude = isNaN(event.venue?.lat) ? 0 : event.venue?.lat;
             console.log(longitude, latitude);
-            let eventMarker = new maplibregl.Marker({ element: markerElement })
+            let eventMarker = new Marker({ element: markerElement })
                 .setLngLat([longitude, latitude])
                 .setPopup(
-                    new maplibregl.Popup({
+                    new Popup({
                         closeOnClick: true,
                         offset: 10,
                         focusAfterOpen: false,
