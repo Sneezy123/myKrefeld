@@ -32,7 +32,7 @@ export default function AppSidebar() {
             title: 'Entdecken',
             url: '/discover',
             icon: Telescope,
-        },
+        } /* 
         {
             title: 'Calendar',
             url: '#',
@@ -47,7 +47,7 @@ export default function AppSidebar() {
             title: 'Settings',
             url: '#',
             icon: Settings,
-        },
+        }, */,
     ];
     return (
         <div className='flex flex-row h-full'>
