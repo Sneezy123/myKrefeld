@@ -17,11 +17,7 @@ export default function MapPage({ events }) {
     const mapRef = useRef(null);
     const mapCRef = useRef(null);
 
-    console.log('Map component rendering');
-
     useEffect(() => {
-        console.log('Map component mounted');
-
         mapRef.current = new Map({
             container: mapCRef.current, // container id
             style: mapJSON,
@@ -46,7 +42,6 @@ export default function MapPage({ events }) {
 
         return () => {
             mapRef.current.remove();
-            console.log('Map component unmounted');
         };
     }, []);
 
@@ -62,7 +57,6 @@ export default function MapPage({ events }) {
 
             const longitude = isNaN(event.venue?.lon) ? 0 : event.venue?.lon;
             const latitude = isNaN(event.venue?.lat) ? 0 : event.venue?.lat;
-            console.log(longitude, latitude);
             let eventMarker = new Marker({ element: markerElement })
                 .setLngLat([longitude, latitude])
                 .setPopup(
@@ -79,13 +73,11 @@ export default function MapPage({ events }) {
             eventMarkers.push(eventMarker);
             eventMarker.addTo(map);
         });
-        console.log('Markers created');
         return () => {
             eventMarkers.forEach((eventMarker) => {
                 eventMarker.remove();
             });
             eventMarkers = [];
-            console.log('Markers removed');
         };
     }, [events]);
 

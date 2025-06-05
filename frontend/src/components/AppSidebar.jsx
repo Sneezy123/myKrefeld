@@ -18,6 +18,7 @@ import {
     SidebarMenuItem,
     SidebarMenuButton,
     SidebarHeader,
+    SidebarFooter,
 } from '@/components/ui/sidebar';
 
 export default function AppSidebar() {
@@ -159,6 +160,11 @@ export default function AppSidebar() {
                         </SidebarGroupContent>
                     </SidebarGroup>
                 </SidebarContent>
+                <SidebarFooter>
+                    <span className='font-light text-sm text-text-500 ml-0'>
+                        &copy; myKrefeld
+                    </span>
+                </SidebarFooter>
             </Sidebar>
             <SidebarTrigger className='sticky top-0 size-10 z-1' />
             <div
