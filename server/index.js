@@ -366,7 +366,7 @@ app.get('/api/cron', async (req, res) => {
         res.status(200).json({ message: 'Events updated' });
     } catch (err) {
         console.error('Event updating failed:', err);
-        res.status(500).json({ error: 'Event updating failed' });
+        res.status(500).json({ error: `Event updating failed ${err}` });
     }
 });
 
