@@ -237,6 +237,13 @@ async function getEventimEventList() {
     }
 }
 async function updateEvents() {
+    let t1 = Date.now();
+    console.log('Preloading geocoding cache from DB...');
+    await preloadGeoCacheFromDB();
+    console.log(
+        '------------- Start to create Krefeld Event List -------------'
+    );
+    const totalStart = Date.now();
     console.log(
         '------------- Start to create Krefeld Event List -------------'
     );
@@ -244,49 +251,71 @@ async function updateEvents() {
     console.log(
         '------------- Start to create Eventim Event List -------------'
     );
+    console.log(
+        '------------- Start to create Eventim Event List -------------'
+    );
     const eventimList = await getEventimEventList();
-    const eventList = [krefeldList, eventimList].flat();
+    const eventList = [krefeldList, eventimList].flat().filter(Boolean);
+    const totalEnd = Date.now();
+    console.log(
+        `\nTotal geocoding and event processing time: ${
+            (totalEnd - totalStart) / 1000
+        } seconds`
+    );
     console.log('------------- Event List creation done! -------------');
     try {
-        for (const eventObj of eventList) {
-            await Event.findOneAndUpdate(
-                { id: eventObj.id },
-                {
-                    id: eventObj.id,
-                    title: eventObj.title,
-                    description: eventObj.description,
-                    start_date: eventObj.start_date,
-                    end_date: eventObj.end_date,
-                    url: eventObj.url,
-                    image: {
-                        url: eventObj.image?.url || '',
-                        width: eventObj.image?.width || 0,
-                        height: eventObj.image?.height || 0,
-                    },
-                    website: eventObj.website || '',
-                    venue: {
-                        id: eventObj.venue?.id || 0,
-                        venue: eventObj.venue?.venue || '',
-                        address: eventObj.venue?.address || '',
-                        city: eventObj.venue?.city || '',
-                        zip: eventObj.venue?.zip || '',
-                        phone: eventObj.venue?.phone || '',
-                        website: eventObj.venue?.website || '',
-                        lat: parseFloat(eventObj.venue?.lat) || 0,
-                        lon: parseFloat(eventObj.venue?.lon) || 0,
-                    },
-                    cost: eventObj.cost || '',
-                    categories: eventObj.categories || [],
-                    tags: eventObj.tags || [],
-                    sourceURL: eventObj.rest_url.match(
-                        /^https?:\/\/(?:[^.]+\.)?([^.\/]+)\./
-                    )[1],
-                },
-                { upsert: true, new: true }
-            );
+        if (eventList.length === 0) {
+            console.log('No events to update.');
+            return;
         }
-
-        console.log('Events erfolgreich aktualisiert');
+        // Use bulkWrite for efficient upserts
+        const bulkOps = eventList.map((eventObj) => ({
+            updateOne: {
+                filter: { id: eventObj.id },
+                update: {
+                    $set: {
+                        id: eventObj.id,
+                        title: eventObj.title,
+                        description: eventObj.description,
+                        start_date: eventObj.start_date,
+                        end_date: eventObj.end_date,
+                        url: eventObj.url,
+                        image: {
+                            url: eventObj.image?.url || '',
+                            width: eventObj.image?.width || 0,
+                            height: eventObj.image?.height || 0,
+                        },
+                        website: eventObj.website || '',
+                        venue: {
+                            id: eventObj.venue?.id || 0,
+                            venue: eventObj.venue?.venue || '',
+                            address: eventObj.venue?.address || '',
+                            city: eventObj.venue?.city || '',
+                            zip: eventObj.venue?.zip || '',
+                            phone: eventObj.venue?.phone || '',
+                            website: eventObj.venue?.website || '',
+                            lat: parseFloat(eventObj.venue?.lat) || 0,
+                            lon: parseFloat(eventObj.venue?.lon) || 0,
+                        },
+                        cost: eventObj.cost || '',
+                        categories: eventObj.categories || [],
+                        tags: eventObj.tags || [],
+                        sourceURL:
+                            eventObj.rest_url.match(
+                                /^https?:\/\/(?:[^.]+\.)?([^.\/]+)\./
+                            )?.[1] || '',
+                    },
+                },
+                upsert: true,
+            },
+        }));
+        if (bulkOps.length > 0) {
+            const result = await Event.bulkWrite(bulkOps, { ordered: false });
+            // Use correct properties for upserted and modified counts
+            const upserts = result.upsertedCount || 0;
+            const mods = result.modifiedCount || 0;
+            console.log(`Events erfolgreich aktualisiert: ${upserts + mods}`);
+        }
     } catch (err) {
         console.error('Fehler beim Aktualisieren der Events:', err);
     }
@@ -315,6 +344,11 @@ async function deleteOldEvents() {
     });
 })();
 
+async function updateDB() {
+    await updateEvents();
+    await deleteOldEvents();
+}
+
 const port = process.env.PORT || 3000;
 app.get('/api/events', async (req, res) => {
     try {
@@ -326,6 +360,18 @@ app.get('/api/events', async (req, res) => {
     }
 });
 
+app.get('/api/cron', async (req, res) => {
+    try {
+        await updateDB();
+        res.status(200).json({ message: 'Events updated' });
+    } catch (err) {
+        console.error('Event updating failed:', err);
+        res.status(500).json({ error: 'Event updating failed' });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server läuft auf Port ${port}`);
 });
+
+//module.exports = app;
