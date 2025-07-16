@@ -16,6 +16,85 @@ if (!uri) {
     process.exit(1);
 }
 
+// In-memory cache for geocoding results (address/venue -> {lat, lon, ...})
+const geoCache = new Map();
+
+// Helper: concurrency-limited async map
+async function asyncMapLimit(arr, limit, asyncFn) {
+    const ret = [];
+    let idx = 0;
+    let active = 0;
+    return new Promise((resolve, reject) => {
+        function next() {
+            if (idx === arr.length && active === 0) return resolve(ret);
+            while (active < limit && idx < arr.length) {
+                const curIdx = idx++;
+                active++;
+                asyncFn(arr[curIdx], curIdx)
+                    .then((res) => (ret[curIdx] = res))
+                    .catch(reject)
+                    .finally(() => {
+                        active--;
+                        next();
+                    });
+            }
+        }
+        next();
+    });
+}
+
+async function preloadGeoCacheFromDB() {
+    // Preload all known coordinates from DB into geoCache
+    const allEvents = await Event.find(
+        {
+            'venue.lat': { $exists: true, $ne: null },
+            'venue.lon': { $exists: true, $ne: null },
+        },
+        {
+            'venue.address': 1,
+            'venue.city': 1,
+            'venue.lat': 1,
+            'venue.lon': 1,
+            'venue.venue': 1,
+        }
+    ).lean();
+    for (const ev of allEvents) {
+        // Use both address+city and venue name as cache keys
+        if (ev.venue) {
+            if (ev.venue.address && ev.venue.city) {
+                const key = `${ev.venue.address}, ${ev.venue.city}, Germany`
+                    .trim()
+                    .toLowerCase();
+                geoCache.set(key, { lat: ev.venue.lat, lon: ev.venue.lon });
+            }
+            if (ev.venue.venue) {
+                const key = `${ev.venue.venue}, Germany`.trim().toLowerCase();
+                geoCache.set(key, { lat: ev.venue.lat, lon: ev.venue.lon });
+            }
+        }
+    }
+}
+
+async function geocodeAddresses(addresses, concurrency = 5) {
+    // Only geocode addresses not in geoCache
+    const toGeocode = addresses.filter((addr) => !geoCache.has(addr));
+    if (toGeocode.length === 0) return;
+    await asyncMapLimit(toGeocode, concurrency, async (addr) => {
+        const geoRes =
+            (
+                await axios.get(`https://nominatim.openstreetmap.org/search`, {
+                    params: {
+                        q: addr,
+                        'accept-language': 'de',
+                        countrycodes: 'de',
+                        format: 'json',
+                    },
+                })
+            ).data[0] || {};
+        geoCache.set(addr, { lat: geoRes.lat, lon: geoRes.lon });
+    });
+}
+
 async function getKrefeldEventList() {
     const today = new Date().toISOString().split('T')[0];
     const urlBaseKrefeld = `https://veranstaltung.krefeld651.de/wp-json/tribe/events/v1/events`;
@@ -28,37 +107,50 @@ async function getKrefeldEventList() {
 
         const totalPages = first.total_pages;
         const totalResults = first.total;
-        let eventIdx = 1;
         let times = [];
+        const startTime = Date.now();
 
+        // 1. Collect all unique addresses
+        let allAddrs = [];
+        let allEvents = [];
         for (let page = 1; page <= totalPages; page++) {
             const { data } = await axios.get(
                 `${urlBaseKrefeld}?per_page=100&start_date=${today}&page=${page}`
             );
             for (const event of data.events) {
-                let t1 = Date.now();
                 const addr = [
                     event.venue?.address || '',
                     event.venue?.city || '',
                     'Germany',
                 ]
                     .filter(Boolean)
-                    .join(', ');
-                const geo =
-                    (
-                        await axios.get(
-                            `https://nominatim.openstreetmap.org/search`,
-                            {
-                                params: {
-                                    q: addr,
-                                    'accept-language': 'de',
-                                    countrycodes: 'de',
-                                    format: 'json',
-                                },
-                            }
-                        )
-                    ).data[0] || {};
-
+                    .join(', ')
+                    .trim()
+                    .toLowerCase();
+                allAddrs.push(addr);
+                allEvents.push(event);
+            }
+        }
+        // Deduplicate
+        allAddrs = [...new Set(allAddrs)];
+        // 2. Geocode in parallel (after DB preload)
+        await geocodeAddresses(allAddrs, 5);
+        // 3. Build eventList
+        let eventIdx = 1;
+        for (const event of allEvents) {
+            let t1 = Date.now();
+            const addr = [
+                event.venue?.address || '',
+                event.venue?.city || '',
+                'Germany',
+            ]
+                .filter(Boolean)
+                .join(', ')
+                .trim()
+                .toLowerCase();
+            let geo = geoCache.get(addr) || {};
+            // Only push if event has an id
+            if (event.id) {
                 eventList.push({
                     id: event.id,
                     title: event.title,
@@ -88,26 +180,29 @@ async function getKrefeldEventList() {
                     tags: event.tags.map((tag) => tag.name),
                     rest_url: event.rest_url,
                 });
-
-                let t2 = Date.now();
-
-                times.push(t2 - t1);
-
+            }
+            let t2 = Date.now();
+            times.push(t2 - t1);
+            // Simple progress output
+            if (eventIdx % 25 === 0 || eventIdx === allEvents.length) {
                 process.stdout.clearLine(0);
                 process.stdout.cursorTo(0);
-
                 process.stdout.write(
-                    `${page}, ${eventIdx}/${totalResults}\tETA: ${
-                        (times.reduce((a, b) => a + b) / times.length / 1000) *
-                        (totalResults - eventIdx)
-                    } s`
+                    `Krefeld: ${eventIdx}/${allEvents.length}`
                 );
-                eventIdx++;
             }
+            eventIdx++;
         }
+        const endTime = Date.now();
+        console.log(
+            `\nKrefeld geocoding and event processing took: ${
+                (endTime - startTime) / 1000
+            } seconds`
+        );
         return eventList;
     } catch (error) {
         console.error('Events konnten nicht extern geladen werden: ', error);
+        return [];
     }
 }
 
@@ -122,55 +217,53 @@ async function getEventimEventList() {
 
         const totalPages = first.totalPages;
         const totalResults = first.totalResults;
-        let productIdx = 1;
         let times = [];
+        const startTime = Date.now();
 
+        // 1. Collect all unique venue names
+        let allAddrs = [];
+        let allProducts = [];
         for (let page = 1; page <= totalPages; page++) {
             const { data } = await axios.get(
                 `${urlBaseEventim}?language=de&city_names=Krefeld&sort=DateAsc&top=50&page=${page}`
             );
             for (const product of data.products) {
-                let t1 = Date.now();
                 const addr = [
                     product.typeAttributes.liveEntertainment.location.name ||
                         '',
                     'Germany',
                 ]
                     .filter(Boolean)
-                    .join(', ');
-                const geo =
-                    (
-                        await axios.get(
-                            `https://nominatim.openstreetmap.org/search`,
-                            {
-                                params: {
-                                    q: addr,
-                                    'accept-language': 'de',
-                                    countrycodes: 'de',
-                                    format: 'json',
-                                },
-                            }
-                        )
-                    ).data[0] || {};
-
-                const startDateDate = new Date(
-                    product.typeAttributes.liveEntertainment.startDate
-                );
-                const geoDisplayName =
-                    geo.display_name?.toString().split(', ') || '';
-                const geoDisplayNameObj = {
-                    name: geoDisplayName[0] || '',
-                    houseNumber: geoDisplayName[1] || '',
-                    streetName: geoDisplayName[2] || '',
-                    cityDistrict: geoDisplayName[3] || '',
-                    cityPart: geoDisplayName[4] || '',
-                    cityName: geoDisplayName[5] || '',
-                    region: geoDisplayName[6] || '',
-                    state: geoDisplayName[geoDisplayName.length - 3] || '',
-                    postCode: geoDisplayName[geoDisplayName.length - 2] || '',
-                    country: geoDisplayName[geoDisplayName.length - 1] || '',
-                };
-
+                    .join(', ')
+                    .trim()
+                    .toLowerCase();
+                allAddrs.push(addr);
+                allProducts.push(product);
+            }
+        }
+        // Deduplicate
+        allAddrs = [...new Set(allAddrs)];
+        // 2. Geocode in parallel (after DB preload)
+        await geocodeAddresses(allAddrs, 5);
+        // 3. Build eventList
+        let productIdx = 1;
+        for (const product of allProducts) {
+            let t1 = Date.now();
+            const addr = [
+                product.typeAttributes.liveEntertainment.location.name || '',
+                'Germany',
+            ]
+                .filter(Boolean)
+                .join(', ')
+                .trim()
+                .toLowerCase();
+            let geo = geoCache.get(addr) || {};
+            let geoDisplayNameObj = {};
+            const startDateDate = new Date(
+                product.typeAttributes.liveEntertainment.startDate
+            );
+            // Only push if product has an id
+            if (product.productId) {
                 eventList.push({
                     id: product.productId,
                     title: product.name,
@@ -196,7 +289,7 @@ async function getEventimEventList() {
                         id: '',
                         venue: product.typeAttributes.liveEntertainment.location
                             .name,
-                        address: `${geoDisplayNameObj.streetName} ${geoDisplayNameObj.houseNumber}`,
+                        address: geoDisplayNameObj.address,
                         city: geoDisplayNameObj.cityName,
                         zip: geoDisplayNameObj.postCode,
                         phone: '',
@@ -217,23 +310,29 @@ async function getEventimEventList() {
                     tags: product.tags,
                     rest_url: product.link,
                 });
-                let t2 = Date.now();
-                times.push(t2 - t1);
+            }
+            let t2 = Date.now();
+            times.push(t2 - t1);
+            // Simple progress output
+            if (productIdx % 25 === 0 || productIdx === allProducts.length) {
                 process.stdout.clearLine(0);
                 process.stdout.cursorTo(0);
-
                 process.stdout.write(
-                    `${page}, ${productIdx}/${totalResults}\tETA: ${
-                        (times.reduce((a, b) => a + b) / times.length / 1000) *
-                        (totalResults - productIdx)
-                    } s`
+                    `Eventim: ${productIdx}/${allProducts.length}`
                 );
-                productIdx++;
             }
+            productIdx++;
         }
+        const endTime = Date.now();
+        console.log(
+            `\nEventim geocoding and event processing took: ${
+                (endTime - startTime) / 1000
+            } seconds`
+        );
         return eventList;
     } catch (error) {
         console.error('Events konnten nicht extern geladen werden: ', error);
+        return [];
     }
 }
 async function updateEvents() {
@@ -244,13 +343,7 @@ async function updateEvents() {
         '------------- Start to create Krefeld Event List -------------'
     );
     const totalStart = Date.now();
-    console.log(
-        '------------- Start to create Krefeld Event List -------------'
-    );
     const krefeldList = await getKrefeldEventList();
-    console.log(
-        '------------- Start to create Eventim Event List -------------'
-    );
     console.log(
         '------------- Start to create Eventim Event List -------------'
     );
@@ -324,6 +417,7 @@ async function updateEvents() {
 async function deleteOldEvents() {
     try {
         const cutoff = new Date();
+        // Use deleteMany with an index on end_date for efficiency
         const result = await Event.deleteMany({ end_date: { $lt: cutoff } });
         console.log(`Gelöschte alte Events: ${result.deletedCount}`);
     } catch (err) {
@@ -332,10 +426,13 @@ async function deleteOldEvents() {
 }
 
 (async () => {
+    let t1 = Date.now();
     await connectToDatabase(uri);
     // initial run
     await updateEvents();
     await deleteOldEvents();
+    // Use Date.now() for correct timing
+    console.log(`Total time: ${(Date.now() - t1) / 1000} s`);
     // cron alle 10 Minuten
     cron.schedule('*/10 * * * *', async () => {
         console.log('Cron-Job startet');
@@ -343,11 +440,6 @@ async function deleteOldEvents() {
         await deleteOldEvents();
     });
 })();
-
-async function updateDB() {
-    await updateEvents();
-    await deleteOldEvents();
-}
 
 const port = process.env.PORT || 3000;
 app.get('/api/events', async (req, res) => {
@@ -362,7 +454,8 @@ app.get('/api/events', async (req, res) => {
 
 app.get('/api/cron', async (req, res) => {
     try {
-        await updateDB();
+        await updateEvents();
+        await deleteOldEvents();
         res.status(200).json({ message: 'Events updated' });
     } catch (err) {
         console.error('Event updating failed:', err);
@@ -373,5 +466,3 @@ app.get('/api/cron', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server läuft auf Port ${port}`);
 });
-
-//module.exports = app;
