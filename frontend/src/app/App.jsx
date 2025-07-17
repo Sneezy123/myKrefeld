@@ -3,9 +3,9 @@ import MapPage from '../pages/map/MapPage.jsx';
 import Discover from '../pages/discover/Discover.jsx';
 import AppSidebar from '../components/AppSidebar.jsx';
 import { Routes, Route } from 'react-router-dom';
-import { Outlet, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Map, Telescope } from 'lucide-react';
+import { useDarkStringStore } from './useBackgroundStore.jsx';
 
 import {
     SidebarInset,
@@ -49,6 +49,8 @@ export default function App() {
     const defaultOpen = sidebarStateCookie.sidebar_state == 'true';
     console.log(sidebarStateCookie?.sidebar_state, sidebarStateCookie); */
 
+    const { darkString } = useDarkStringStore();
+
     return (
         <>
             <meta
@@ -57,7 +59,7 @@ export default function App() {
             />
 
             <SidebarProvider /* defaultOpen={defaultOpen} */>
-                <SidebarInset className=''>
+                <SidebarInset className={darkString}>
                     <Routes>
                         <Route path='/' element={<AppSidebar />}>
                             <Route

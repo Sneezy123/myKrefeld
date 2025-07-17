@@ -18,7 +18,11 @@ import {
     SidebarMenuItem,
     SidebarMenuButton,
     SidebarHeader,
+    SidebarFooter,
 } from '@/components/ui/sidebar';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useDarkStringStore } from '../app/useBackgroundStore';
 
 export default function AppSidebar() {
     const items = [
@@ -48,8 +52,11 @@ export default function AppSidebar() {
             icon: Settings,
         },
     ];
+
+    const { darkString, setDarkString } = useDarkStringStore();
+
     return (
-        <div className='flex flex-row h-full'>
+        <div className={`flex flex-row h-full`}>
             <Sidebar collapsible='icon' variant='sidebar'>
                 <SidebarHeader className='flex flex-row justify-between w-full items-center'>
                     <div className='flex aspect-square size-8 items-center justify-center rounded-lg'>
@@ -159,6 +166,20 @@ export default function AppSidebar() {
                         </SidebarGroupContent>
                     </SidebarGroup>
                 </SidebarContent>
+                <SidebarFooter>
+                    <SidebarMenu className={'py-5'}>
+                        <SidebarMenuItem>
+                            <Switch
+                                onCheckedChange={(e) =>
+                                    darkString === 'dark' ?
+                                        setDarkString('')
+                                    :   setDarkString('dark')
+                                }
+                            />
+                            <Label>Dark Mode</Label>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarFooter>
             </Sidebar>
             <SidebarTrigger className='sticky top-0 size-10 z-1' />
             <div

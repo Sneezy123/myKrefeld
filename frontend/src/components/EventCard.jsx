@@ -56,7 +56,7 @@ export default function EventCard({
                                             alt={event.title}
                                             className='rounded-xl mb-4 w-full h-40 object-cover'
                                         />
-                                    :   <div className='rounded-xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
+                                    :   <div className='rounded-xl mb-4 w-full h-40 object-cover bg-gray-100 dark:bg-[#1d1d20]'></div>
                                     }
                                     {/* Event Title */}
                                     <CardTitle
@@ -78,7 +78,7 @@ export default function EventCard({
                                 </CardHeader>
                                 {/* Event Details */}
                                 <CardContent>
-                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-2'>
+                                    <p className='font-stretch-semi-expanded text-sm text-text-900  mb-2'>
                                         <strong>Beginn:</strong>{' '}
                                         {new Date(
                                             event.start_date
@@ -105,11 +105,11 @@ export default function EventCard({
                                     </p>
                                     {/* Venue */}
                                     {event.venue?.venue === '' ?
-                                        <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                        <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
                                             <strong>Veranstaltungsort:</strong>{' '}
                                             k.A.
                                         </p>
-                                    :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                    :   <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
                                             <strong>Veranstaltungsort:</strong>{' '}
                                             {event.venue?.venue}:{' '}
                                             <span className='font-light'>
@@ -120,10 +120,10 @@ export default function EventCard({
                                         </p>
                                     }
                                     {event.cost === '' ?
-                                        <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                        <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
                                             <strong>Preis:</strong> k.A.
                                         </p>
-                                    :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                    :   <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
                                             <strong>Preis:</strong>{' '}
                                             {(
                                                 [
@@ -158,7 +158,7 @@ export default function EventCard({
                                     {typeof distanceToMe === 'number' &&
                                         distanceToMe !== Infinity &&
                                         distanceToMe !== 0 && (
-                                            <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
+                                            <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
                                                 <strong>Abstand:</strong>{' '}
                                                 {formatDistance(distanceToMe)}
                                             </p>
@@ -259,7 +259,7 @@ function TimeIndicator({ eventStart, eventEnd }) {
                         title='Diese Veranstaltung ist zuende.'
                     ></span>
                 </span>
-                <p className='font-stretch-semi-expanded text-sm text-gray-600'>
+                <p className='font-stretch-semi-expanded text-sm text-text-900'>
                     {textContent}
                 </p>
             </div>

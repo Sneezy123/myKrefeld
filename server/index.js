@@ -429,16 +429,11 @@ async function deleteOldEvents() {
     let t1 = Date.now();
     await connectToDatabase(uri);
     // initial run
-    await updateEvents();
-    await deleteOldEvents();
+    //await updateEvents();
+    //await deleteOldEvents();
     // Use Date.now() for correct timing
-    console.log(`Total time: ${(Date.now() - t1) / 1000} s`);
-    // cron alle 10 Minuten
-    cron.schedule('*/10 * * * *', async () => {
-        console.log('Cron-Job startet');
-        await updateEvents();
-        await deleteOldEvents();
-    });
+    //console.log(`Total time: ${(Date.now() - t1) / 1000} s`);
+    // Unnecessary bc db is updated externally through cron-job.org
 })();
 
 const port = process.env.PORT || 3000;

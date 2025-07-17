@@ -31,8 +31,8 @@ function FilterCard({ symbol, text, id, isActive, filterEvents }) {
             className={`mr-3 p-5
             ${
                 isActive ?
-                    'border-accent-200 bg-accent-50 filter  text-accent-600 hover:bg-accent-50/60 hover:text-accent-600'
-                :   'border-stone-200 bg-white filter  hover:'
+                    'border-accent-500 dark:border-accent-600 dark:bg-accent-100 bg-accent-50 filter text-accent-600 hover:bg-accent-50/60 dark:hover:bg-accent-100/60 hover:text-accent-600'
+                :   'border-stone-200 bg-white filter  text-text-900 hover:text-text-950'
             }
             transition-all flex flex-row items-center cursor-pointer`}
         >
@@ -469,10 +469,10 @@ export default function Discover({ events }) {
             {/* Use a Fragment to return multiple top-level elements */}
             {/* SECTION 1: Fixed-Height Header and Filter Bar (Stays at the top, h-dvh) */}
             <div className='py-4 w-full @container flex flex-col'>
-                <h1 className='font-stretch-semi-expanded text-4xl mx-10 lg:ml-15 text-center lg:text-left'>
+                <h1 className='font-stretch-semi-expanded text-4xl mx-10 lg:ml-15 text-center lg:text-left text-text-950'>
                     Entdecke aktuelle Veranstaltungen
                 </h1>
-                <h2 className='font-stretch-semi-expanded text-lg mx-10 lg:ml-15 text-stone-400 font-light text-center lg:text-left'>
+                <h2 className='font-stretch-semi-expanded text-lg mx-10 lg:ml-15 text-text-900 font-light text-center lg:text-left'>
                     Krefeld und Umgebung
                 </h2>
 
@@ -508,14 +508,14 @@ export default function Discover({ events }) {
                 <div className='flex flex-col w-full grow my-5'>
                     {' '}
                     {/* Added my-5 for spacing, removed h-full/flex-grow if not relevant here */}
-                    <span className='text-black text-2xl font-bold mx-10 lg:mx-15 text-center my-2'>
+                    <span className='text-text-950 text-2xl font-bold mx-10 lg:mx-15 text-center my-2'>
                         Die Veranstaltungen konnten nicht geladen werden.
                     </span>
-                    <span className='text-gray-500 text-xl mx-10 lg:mx-15 text-center mb-5'>
+                    <span className='text-text-800 text-xl mx-10 lg:mx-15 text-center mb-5'>
                         Überprüfe deine Internetverbindung und versuche es
                         später erneut.
                     </span>
-                    <span className='text-gray-500 font-[350] text-xl mx-10 lg:mx-15 text-center'>
+                    <span className='text-text-800 font-[350] text-xl mx-10 lg:mx-15 text-center'>
                         Wenn das Problem weiterhin besteht, kontaktiere den{' '}
                         <span className='underline underline-offset-2 decoration-accent-500'>
                             Support
