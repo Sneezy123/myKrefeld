@@ -6,6 +6,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Outlet, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Map, Telescope } from 'lucide-react';
+
 import {
     SidebarInset,
     SidebarProvider,
