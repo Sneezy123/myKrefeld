@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { DialogDrawerFooter } from './dialogdrawer';
 import { Scroll, XIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -36,10 +37,13 @@ function DialogOverlay({ className, ...props }) {
 
 function DialogContent({ className, children, ...props }) {
     const childrenArray = Children.toArray(children);
+    console.log(childrenArray);
     const scrollableContent = childrenArray.filter(
-        (child) => child.type !== DialogFooter
+        (child) => child.type !== DialogDrawerFooter
     );
-    const footer = childrenArray.find((child) => child.type === DialogFooter);
+    const footer = childrenArray.find(
+        (child) => child.type === DialogDrawerFooter
+    );
     return (
         <DialogPortal data-slot='dialog-portal'>
             <DialogOverlay>

@@ -4,6 +4,7 @@ import { Drawer as DrawerPrimitive } from 'vaul';
 import { ScrollArea } from './scroll-area';
 
 import { cn } from '@/lib/utils';
+import { DialogDrawerFooter } from './dialogdrawer';
 
 function Drawer({ ...props }) {
     return <DrawerPrimitive.Root data-slot='drawer' {...props} />;
@@ -37,9 +38,11 @@ function DrawerOverlay({ className, ...props }) {
 function DrawerContent({ className, children, ...props }) {
     const childrenArray = Children.toArray(children);
     const scrollableContent = childrenArray.filter(
-        (child) => child.type !== DrawerFooter
+        (child) => child.type !== DialogDrawerFooter
     );
-    const footer = childrenArray.find((child) => child.type === DrawerFooter);
+    const footer = childrenArray.find(
+        (child) => child.type === DialogDrawerFooter
+    );
     return (
         <DrawerPortal data-slot='drawer-portal'>
             <DrawerOverlay />

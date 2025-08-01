@@ -74,8 +74,8 @@ function DialogDrawerHeader({ ...props }) {
 
 function DialogDrawerFooter({ ...props }) {
     return mode === 'drawer' ?
-            <DrawerFooter className={'mt-3'} {...props} />
-        :   <DialogFooter className={'mt-3'} {...props} />;
+            <DrawerFooter {...props} />
+        :   <DialogFooter {...props} />;
 }
 
 export {
