@@ -12,7 +12,7 @@ import {
     Baby,
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import EventCard from '@/src/components/EventCard.jsx';
+import EventCard from '@/src/pages/discover/EventCard.jsx';
 import DebouncedAutoSizer from '@/src/components/DebouncedAutoSizer.jsx';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
