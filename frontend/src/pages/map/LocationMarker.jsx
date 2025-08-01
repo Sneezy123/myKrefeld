@@ -10,8 +10,10 @@ function CustomMarker() {
             <circle cx='100' cy='100' r='100'></circle>
         </svg> */
 
-        <span className={`relative flex size-2.5`}>
-            <span className='relative inline-flex size-2.5 rounded-full bg-white border-2 border-black cursor-pointer'></span>
+        <span className={`relative flex`}>
+            <span className='relative inline-flex size-7 rounded-full bg-white border-2 border-black cursor-pointer justify-center items-center'>
+                999
+            </span>
         </span>
     );
 }

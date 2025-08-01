@@ -339,14 +339,22 @@ async function updateEvents() {
     let t1 = Date.now();
     console.log('Preloading geocoding cache from DB...');
     await preloadGeoCacheFromDB();
-    console.log('------------- Start to create Krefeld Event List -------------');
+    console.log(
+        '------------- Start to create Krefeld Event List -------------'
+    );
     const totalStart = Date.now();
     const krefeldList = await getKrefeldEventList();
-    console.log('------------- Start to create Eventim Event List -------------');
+    console.log(
+        '------------- Start to create Eventim Event List -------------'
+    );
     const eventimList = await getEventimEventList();
     const eventList = [krefeldList, eventimList].flat().filter(Boolean);
     const totalEnd = Date.now();
-    console.log(`\nTotal geocoding and event processing time: ${(totalEnd - totalStart) / 1000} seconds`);
+    console.log(
+        `\nTotal geocoding and event processing time: ${
+            (totalEnd - totalStart) / 1000
+        } seconds`
+    );
     console.log('------------- Event List creation done! -------------');
     try {
         if (eventList.length === 0) {
@@ -354,7 +362,7 @@ async function updateEvents() {
             return;
         }
         // Use bulkWrite for efficient upserts
-        const bulkOps = eventList.map(eventObj => ({
+        const bulkOps = eventList.map((eventObj) => ({
             updateOne: {
                 filter: { id: eventObj.id },
                 update: {
@@ -385,11 +393,14 @@ async function updateEvents() {
                         cost: eventObj.cost || '',
                         categories: eventObj.categories || [],
                         tags: eventObj.tags || [],
-                        sourceURL: eventObj.rest_url.match(/^https?:\/\/(?:[^.]+\.)?([^.\/]+)\./)?.[1] || '',
-                    }
+                        sourceURL:
+                            eventObj.rest_url.match(
+                                /^https?:\/\/(?:[^.]+\.)?([^.\/]+)\./
+                            )?.[1] || '',
+                    },
                 },
-                upsert: true
-            }
+                upsert: true,
+            },
         }));
         if (bulkOps.length > 0) {
             const result = await Event.bulkWrite(bulkOps, { ordered: false });
@@ -438,6 +449,17 @@ app.get('/api/events', async (req, res) => {
     } catch (err) {
         console.error('Fehler beim Abruf der Events:', err);
         res.status(500).json({ error: 'Events konnten nicht geladen werden' });
+    }
+});
+
+app.get('/api/cron', async (req, res) => {
+    try {
+        await updateEvents();
+        await deleteOldEvents();
+        res.status(200).json({ message: 'Events updated' });
+    } catch (err) {
+        console.error('Event updating failed:', err);
+        res.status(500).json({ error: `Event updating failed ${err}` });
     }
 });
 

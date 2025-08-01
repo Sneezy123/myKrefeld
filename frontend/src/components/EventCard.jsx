@@ -140,16 +140,18 @@ export default function EventCard({
                                                 )
                                             ) ?
                                                 'Kostenlos'
-                                            :   `${parseFloat(
-                                                    event.cost
-                                                        ?.toString()
-                                                        .match(
-                                                            /\d+([\.,]\d+)?/
-                                                        )[0]
-                                                ).toLocaleString('de-DE', {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                })} €`
+                                            :   `${
+                                                    parseFloat(
+                                                        event.cost
+                                                            ?.toString()
+                                                            .match(
+                                                                /\d+([\.,]\d+)?/
+                                                            )
+                                                    ).toLocaleString('de-DE', {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    }) ?? 'null'
+                                                } €`
                                             }
                                         </p>
                                     }
@@ -181,6 +183,7 @@ export default function EventCard({
                                 __html: DOMPurify.sanitize(event.description),
                             }}
                         ></div>
+                        Hello
                     </DialogContent>
                 </Dialog>
             :   <SkeletonCard />}
