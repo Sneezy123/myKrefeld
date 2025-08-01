@@ -1,88 +1,23 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
-
 import maplibregl from 'maplibre-gl';
 import MarkerPopup from './MarkerPopup';
 import Supercluster from 'supercluster';
 import { useRef, useEffect } from 'react';
-import LocationMarker from './LocationMarker'; // For single event markers
+import LocationMarker from './LocationMarker';
 import { renderToString } from 'react-dom/server';
 import { createRoot } from 'react-dom/client';
 
 export default function MapPage({ events }) {
+    // Refs remain the same
+    const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
-    const mapCRef = useRef(null);
-    const markersRef = useRef({}); // id -> marker
+    const markersRef = useRef({});
     const clusterIndexRef = useRef(null);
 
-    // 1. Initialize the map only once
-    useEffect(() => {
-        mapRef.current = new maplibregl.Map({
-            container: mapCRef.current,
-            style: 'https://tiles.openfreemap.org/styles/bright',
-            center: [6.565411, 51.334534],
-            zoom: 12.95,
-            minZoom: 12,
-        });
-        mapRef.current.addControl(
-            new maplibregl.NavigationControl({ visualizePitch: true }),
-            'top-right'
-        );
-        mapRef.current.addControl(
-            new maplibregl.GeolocateControl({
-                positionOptions: { enableHighAccuracy: true },
-                trackUserLocation: true,
-            }),
-            'top-right'
-        );
-        return () => {
-            mapRef.current.remove();
-        };
-    }, []);
+    // --- HELPER FUNCTIONS (Extracted for clarity) ---
 
-    // 2. Prepare supercluster index from events
-    useEffect(() => {
-        if (!events || events.length === 0) return;
-
-        const features = events
-            .filter(
-                (event) => !isNaN(event.venue?.lon) && !isNaN(event.venue?.lat)
-            )
-            .map((event) => ({
-                type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: [event.venue.lon, event.venue.lat],
-                },
-                properties: {
-                    eventId: event.id,
-                    eventTitle: event.title,
-                },
-            }));
-
-        clusterIndexRef.current = new Supercluster({
-            radius: 60,
-            maxZoom: 17,
-        });
-        clusterIndexRef.current.load(features);
-
-        // Initial cluster render
-        if (mapRef.current) {
-            renderClusters();
-            mapRef.current.on('moveend', renderClusters);
-        }
-
-        return () => {
-            if (mapRef.current) {
-                mapRef.current.off('moveend', renderClusters);
-            }
-            clearAllMarkers();
-        };
-        // eslint-disable-next-line
-    }, [events]);
-
-    // 3. Render clusters and single markers
-    function renderClusters() {
-        clearAllMarkers();
+    // This function now handles adding all markers and clusters
+    const updateMarkersAndClusters = () => {
         const map = mapRef.current;
         const clusterIndex = clusterIndexRef.current;
         if (!map || !clusterIndex) return;
@@ -95,18 +30,46 @@ export default function MapPage({ events }) {
             bounds.getNorth(),
         ];
         const zoom = Math.round(map.getZoom());
-
         const clusters = clusterIndex.getClusters(bbox, zoom);
 
+        const newMarkers = {};
+
+        // Compare new clusters with existing markers to avoid re-rendering everything
+        const currentMarkerIds = Object.keys(markersRef.current);
+        const newClusterIds = clusters.map((c) => {
+            return c.properties.cluster ?
+                    `cluster-${c.properties.cluster_id}`
+                :   `event-${c.properties.eventId}`;
+        });
+
+        // 1. Remove old markers that are no longer in view
+        currentMarkerIds.forEach((id) => {
+            if (!newClusterIds.includes(id)) {
+                markersRef.current[id].remove();
+                delete markersRef.current[id];
+            }
+        });
+
+        // 2. Add new markers
         clusters.forEach((cluster) => {
             const [lng, lat] = cluster.geometry.coordinates;
+            const isCluster = cluster.properties.cluster;
+            const clusterId =
+                isCluster ?
+                    `cluster-${cluster.properties.cluster_id}`
+                :   `event-${cluster.properties.eventId}`;
 
-            if (cluster.properties.cluster) {
-                // It's a cluster - render as React so Tailwind classes work!
+            // If marker already exists, don't re-create it
+            if (markersRef.current[clusterId]) {
+                return;
+            }
+
+            let element;
+            let popup = null;
+
+            if (isCluster) {
+                // It's a cluster
                 const count = cluster.properties.point_count;
-                const clusterId = cluster.properties.cluster_id;
-
-                // Create a React element and render to string, so TW classes work
                 const clusterHTML = renderToString(
                     <div className='w-9 h-9 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold border-2 border-primary-600 dark:border-primary-400'>
                         {count}
@@ -114,63 +77,132 @@ export default function MapPage({ events }) {
                 );
                 const clusterElement = document.createElement('div');
                 clusterElement.innerHTML = clusterHTML;
-
-                // Ensure the element is the React rendered div
-                const element = clusterElement.firstChild;
+                element = clusterElement.firstChild;
 
                 element.style.cursor = 'pointer';
                 element.onclick = () => {
-                    // Zoom in on cluster click
                     const expansionZoom = Math.min(
-                        clusterIndex.getClusterExpansionZoom(clusterId),
+                        clusterIndex.getClusterExpansionZoom(
+                            cluster.properties.cluster_id
+                        ),
                         map.getMaxZoom()
                     );
-                    map.easeTo({
-                        center: [lng, lat],
-                        zoom: expansionZoom,
-                    });
+                    map.easeTo({ center: [lng, lat], zoom: expansionZoom });
                 };
-                map.on('load', () => {
-                    const marker = new maplibregl.Marker({ element })
-                        .setLngLat([lng, lat])
-                        .addTo(map);
-
-                    markersRef.current[`cluster-${clusterId}`] = marker;
-                });
             } else {
                 // It's a single event
-                const markerElement = document.createElement('div');
-                markerElement.innerHTML = renderToString(<LocationMarker />);
+                element = document.createElement('div');
+                element.innerHTML = renderToString(<LocationMarker />);
+
                 const popupDiv = document.createElement('div');
-                const root = createRoot(popupDiv);
-                root.render(<MarkerPopup cluster={cluster} />);
-                const popup = new maplibregl.Popup({
+                createRoot(popupDiv).render(<MarkerPopup cluster={cluster} />);
+                popup = new maplibregl.Popup({
                     closeOnClick: true,
                     closeButton: false,
                     offset: 10,
                     focusAfterOpen: false,
                 }).setDOMContent(popupDiv);
-
-                map.on('load', () => {
-                    const marker = new maplibregl.Marker({
-                        element: markerElement,
-                    })
-                        .setLngLat([lng, lat])
-                        .setPopup(popup)
-                        .addTo(map);
-
-                    markersRef.current[`event-${cluster.properties.eventId}`] =
-                        marker;
-                });
             }
+
+            const marker = new maplibregl.Marker({ element })
+                .setLngLat([lng, lat])
+                .addTo(map);
+
+            if (popup) {
+                marker.setPopup(popup);
+            }
+
+            markersRef.current[clusterId] = marker;
         });
-    }
+    };
 
-    // 4. Remove all map markers
-    function clearAllMarkers() {
-        Object.values(markersRef.current).forEach((marker) => marker.remove());
-        markersRef.current = {};
-    }
+    // --- LIFECYCLE HOOKS ---
 
-    return <div className='w-full h-full relative' ref={mapCRef}></div>;
+    // 1. Main useEffect for map initialization and teardown
+    useEffect(() => {
+        if (mapRef.current) return; // Initialize map only once
+
+        const map = new maplibregl.Map({
+            container: mapContainerRef.current,
+            style: 'https://tiles.openfreemap.org/styles/bright',
+            center: [6.565411, 51.334534],
+            zoom: 12.95,
+            minZoom: 12,
+        });
+
+        mapRef.current = map;
+
+        // The 'load' event listener is now set up only ONCE.
+        map.on('load', () => {
+            // Add controls after load
+            map.addControl(
+                new maplibregl.NavigationControl({ visualizePitch: true }),
+                'top-right'
+            );
+            map.addControl(
+                new maplibregl.GeolocateControl({
+                    positionOptions: { enableHighAccuracy: true },
+                    trackUserLocation: true,
+                }),
+                'top-right'
+            );
+
+            // If cluster data is already available, render the markers
+            if (clusterIndexRef.current) {
+                updateMarkersAndClusters();
+            }
+
+            // The 'moveend' event now correctly triggers updates
+            map.on('moveend', updateMarkersAndClusters);
+        });
+
+        // The single, unified cleanup function
+        return () => {
+            console.log('Cleaning up map resources...');
+            const mapInstance = mapRef.current;
+            if (mapInstance) {
+                // The cleanup order is now guaranteed to be correct.
+                // 1. Remove event listeners
+                mapInstance.off('moveend', updateMarkersAndClusters);
+
+                // 2. Remove all markers
+                Object.values(markersRef.current).forEach((marker) =>
+                    marker.remove()
+                );
+                markersRef.current = {};
+
+                // 3. Finally, remove the map instance itself
+                mapInstance.remove();
+                mapRef.current = null;
+            }
+        };
+    }, []); // Empty dependency array ensures this runs only once on mount and unmount
+
+    // 2. useEffect for handling changes in the `events` prop
+    useEffect(() => {
+        if (!events) return;
+
+        const features = events
+            .filter((event) => event.venue?.lon && event.venue?.lat)
+            .map((event) => ({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [event.venue.lon, event.venue.lat],
+                },
+                properties: { eventId: event.id, eventTitle: event.title },
+            }));
+
+        clusterIndexRef.current = new Supercluster({ radius: 60, maxZoom: 17 });
+        clusterIndexRef.current.load(features);
+
+        // If the map is already loaded and ready, trigger an update.
+        // `isStyleLoaded` is a safe way to check if the map is ready for interaction.
+        if (mapRef.current && mapRef.current.isStyleLoaded()) {
+            updateMarkersAndClusters();
+        }
+        // No cleanup is needed here because the main useEffect handles it all.
+    }, [events]);
+
+    return <div className='w-full h-full relative' ref={mapContainerRef}></div>;
 }
