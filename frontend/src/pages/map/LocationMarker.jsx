@@ -11,9 +11,7 @@ function CustomMarker() {
         </svg> */
 
         <span className={`relative flex`}>
-            <span className='relative inline-flex size-7 rounded-full bg-white border-2 border-black cursor-pointer justify-center items-center'>
-                999
-            </span>
+            <span className='relative inline-flex size-3 rounded-full text-white bg-primary-500 border-2 border-primary-600 dark:border-primary-400 cursor-pointer justify-center items-center'></span>
         </span>
     );
 }

@@ -159,7 +159,7 @@ function Sidebar({
             <div
                 data-slot='sidebar'
                 className={cn(
-                    'bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col',
+                    'bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col font-sans',
                     className
                 )}
                 {...props}
@@ -253,7 +253,10 @@ function SidebarTrigger({ className, onClick, ...props }) {
             data-slot='sidebar-trigger'
             variant='ghost'
             size='icon'
-            className={cn('size-7', className)}
+            className={cn(
+                'size-7 text-text-50 bg-background-950 border-card/40 border-2',
+                className
+            )}
             onClick={(event) => {
                 onClick?.(event);
                 toggleSidebar();

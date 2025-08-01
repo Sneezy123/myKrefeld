@@ -2,21 +2,28 @@
   "version": 8,
   "metadata": {"maputnik:renderer": "mlgljs"},
   "sources": {
-    "ne2_shaded": {
-      "maxzoom": 6,
-      "tileSize": 256,
-      "tiles": [
-        "https://tiles.openfreemap.org/natural_earth/ne2sr/{z}/{x}/{y}.png"
-      ],
-      "type": "raster"
-    },
-    "openmaptiles": {
-      "type": "vector",
-      "url": "https://api.maptiler.com/tiles/v3-openmaptiles/tiles.json?key=wq7vLl3lZf4W6yfjssqQ"
-    }
+  "ne2_shaded": {
+    "maxzoom": 6,
+    "tileSize": 256,
+    "tiles": [
+      "https://tiles.openfreemap.org/natural_earth/ne2sr/{z}/{x}/{y}.png"
+    ],
+    "type": "raster"
   },
+  "openmaptiles": {
+    "type": "vector",
+    "tiles": [
+      "https://tiles.openfreemap.org/planet/20250709_001002_pt/{z}/{x}/{y}.pbf"
+    ],
+    "minzoom": 0,
+    "maxzoom": 14,
+    "attribution": "© OpenFreeMap / OpenStreetMap contributors"
+  }
+}
+,
   "sprite": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm",
-  "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+"glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+
   "layers": [
     {
       "id": "background",

@@ -8,6 +8,22 @@
 
 @layer base {
 
+
+    /* MapLibre */
+    .maplibregl-popup-content {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+.maplibregl-popup-tip {
+  display: none !important;
+}
+.maplibregl-popup {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
   .scrollbar-hidden {
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */

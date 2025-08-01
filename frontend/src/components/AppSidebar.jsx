@@ -22,7 +22,6 @@ import {
 } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { useDarkStringStore } from '../app/useBackgroundStore';
 
 export default function AppSidebar() {
     const items = [
@@ -53,12 +52,10 @@ export default function AppSidebar() {
         },
     ];
 
-    const { darkString, setDarkString } = useDarkStringStore();
-
     return (
         <div className={`flex flex-row h-full`}>
             <Sidebar collapsible='icon' variant='sidebar'>
-                <SidebarHeader className='flex flex-row justify-between w-full items-center'>
+                <SidebarHeader className='flex flex-row justify-between w-full items-center pr-3 overflow-hidden'>
                     <div className='flex aspect-square size-8 items-center justify-center rounded-lg'>
                         <svg
                             className='size-full'
@@ -141,6 +138,14 @@ export default function AppSidebar() {
                     <span className='truncate font-semibold grow overflow-ellipsis'>
                         myKrefeld
                     </span>
+                    <Switch
+                        onCheckedChange={(e) =>
+                            document.body.classList.contains('dark') ?
+                                document.body.classList.remove('dark')
+                            :   document.body.classList.add('dark')
+                        }
+                        defaultChecked={true} // Change to false if light mode is default
+                    />
                 </SidebarHeader>
                 <SidebarContent>
                     <SidebarGroup>
@@ -167,25 +172,13 @@ export default function AppSidebar() {
                     </SidebarGroup>
                 </SidebarContent>
                 <SidebarFooter>
-                    <SidebarMenu className={'py-5'}>
-                        <SidebarMenuItem>
-                            <Switch
-                                onCheckedChange={(e) =>
-                                    darkString === 'dark' ?
-                                        setDarkString('')
-                                    :   setDarkString('dark')
-                                }
-                            />
-                            <Label>Dark Mode</Label>
-                        </SidebarMenuItem>
+                    <SidebarMenu className={'py-3 px-3'}>
+                        <SidebarMenuItem></SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarFooter>
             </Sidebar>
             <SidebarTrigger className='sticky top-0 size-10 z-1' />
-            <div
-                id='scroll-container'
-                className='w-full -ml-10 overflow-x-hidden overflow-y-visible flex flex-col flex-1 grow'
-            >
+            <div className='w-full -ml-10 overflow-x-hidden overflow-y-visible flex flex-col flex-1 grow'>
                 <Outlet />
             </div>
         </div>

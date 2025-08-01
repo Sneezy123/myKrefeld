@@ -5,7 +5,6 @@ import AppSidebar from '../components/AppSidebar.jsx';
 import { Routes, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useDarkStringStore } from './useBackgroundStore.jsx';
 
 import {
     SidebarInset,
@@ -49,8 +48,6 @@ export default function App() {
     const defaultOpen = sidebarStateCookie.sidebar_state == 'true';
     console.log(sidebarStateCookie?.sidebar_state, sidebarStateCookie); */
 
-    const { darkString } = useDarkStringStore();
-
     return (
         <>
             <meta
@@ -59,7 +56,7 @@ export default function App() {
             />
 
             <SidebarProvider /* defaultOpen={defaultOpen} */>
-                <SidebarInset className={darkString}>
+                <SidebarInset>
                     <Routes>
                         <Route path='/' element={<AppSidebar />}>
                             <Route
@@ -71,11 +68,8 @@ export default function App() {
                                 element={<MapPage events={events} />}
                             />
                             <Route
-                                id='scroll-discover'
                                 path='discover'
-                                element={
-                                    <Discover id='scroll-b' events={events} />
-                                }
+                                element={<Discover events={events} />}
                             />
                         </Route>
                         <Route path='/*' element={<NoPage />} />
@@ -88,16 +82,17 @@ export default function App() {
 
 function NoPage() {
     return (
-        <div className='flex flex-col justify-center items-center w-dvw h-dvh'>
-            <h1 className='text-9xl font-stretch-semi-expanded'>404</h1>
-            <h2 className='text-5xl font-stretch-semi-expanded'>
-                Diese Seite wurde nicht gefunden
-            </h2>
-            <p className='text-2xl font-stretch-semi-expanded'>
-                Zurück zur Startseite?{' '}
-                <Link to='/' className='underline text-accent'>
-                    Hier
+        <div className='flex flex-col justify-center items-center w-dvw h-dvh font-sans'>
+            <h1 className='text-9xl font-bold m-5'>404</h1>
+            <h2 className='text-3xl '>Wir haben nichts gefunden.</h2>
+            <p className='text-2xl w-1/2 text-center mt-3'>
+                Wir haben überall nachgeschaut, doch es scheint, als ob diese
+                Seite nicht existiert. Willst du zurück zur Startseite? Dann
+                klicke auf den Link{' '}
+                <Link to='/' className='underline text-accent-600'>
+                    hier
                 </Link>
+                .
             </p>
         </div>
     );

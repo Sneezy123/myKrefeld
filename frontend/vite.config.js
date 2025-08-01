@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import tailwindcss from '@tailwindcss/vite';
-import fs from 'fs';
 import path from 'path';
 
 export default defineConfig({
@@ -25,6 +24,9 @@ export default defineConfig({
     },
     base: './',
     server: {
+        host: '0.0.0.0',
+        port: 5173,
+        https: true,
         proxy: {
             '/api': {
                 target: 'http://localhost:3000',
@@ -34,8 +36,6 @@ export default defineConfig({
         },
     },
     define: {
-        __API_BASE__: JSON.stringify(
-            process.env.VITE_API_URL || 'http://localhost:3000/api'
-        ),
+        __API_BASE__: JSON.stringify(process.env.VITE_API_URL || '/api'),
     },
 });

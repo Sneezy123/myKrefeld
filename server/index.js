@@ -5,6 +5,9 @@ import cron from 'node-cron';
 import { connectToDatabase } from './lib/db.js';
 import Event from './models/Event.js';
 import 'dotenv/config';
+import readline from 'readline';
+import { text } from 'stream/consumers';
+import open from 'open';
 
 const app = express();
 app.use(cors());
@@ -16,7 +19,8 @@ if (!uri) {
     process.exit(1);
 }
 
-// In-memory cache for geocoding results (address/venue -> {lat, lon, ...})
+/* In-memory cache for geocoding results (address/venue -> {lat, lon, ...}) */
+
 const geoCache = new Map();
 
 // Helper: concurrency-limited async map
@@ -436,7 +440,42 @@ async function deleteOldEvents() {
     // Unnecessary bc db is updated externally through cron-job.org
 })();
 
+async function getHbfTimes() {
+    const { data } = await axios.get(
+        'https://openservice-test.vrr.de/openservice/XML_DM_REQUEST',
+        {
+            params: {
+                outputFormat: 'rapidJSON',
+                version: '10.4.18.18',
+                place_dm: 'Krefeld',
+                placeState_dm: 'empty',
+                type_dm: 'stop',
+                name_dm: 'Hbf',
+                mode: 'direct',
+            },
+        }
+    );
+    return data;
+}
 const port = process.env.PORT || 3000;
+
+app.get('/api/stopTimes', async (req, res) => {
+    try {
+        const stopTimes = await getHbfTimes();
+        res.status(200).json(stopTimes.stopEvents);
+    } catch (error) {
+        console.error(
+            'Ein Fehler ist beim Abrufen der Daten aufgetreten:',
+            error
+        );
+        res.status(500).json({
+            error: 'Die Daten konnten nicht abgerufen werden.',
+            statusCode: 500,
+            message: 'Internal Server Error',
+        });
+    }
+});
+
 app.get('/api/events', async (req, res) => {
     try {
         const events = await Event.find();
@@ -460,4 +499,68 @@ app.get('/api/cron', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server läuft auf Port ${port}`);
+});
+
+/* - Handle user input while server is running (catch commands like in vite cli) - */
+// 2) Set up a readline interface on stdin:
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: '', // this is what shows before user input
+});
+
+// Start the prompt:
+rl.prompt();
+
+// 3) Handle each line of user input:
+rl.on('line', (line) => {
+    const cmd = line.trim();
+
+    switch (cmd) {
+        case 'c':
+            console.clear();
+            console.log('Server läuft auf Port 3000');
+            break;
+
+        case 'q':
+            process.exit(0);
+        case 'r':
+            console.log('⚠️ NOT IMPLEMENTED');
+            break;
+        case 'u':
+            console.log('http://localhost:3000/');
+            break;
+        case 'o':
+            open('http://localhost:3000/');
+            break;
+        case 'h':
+            console.log('\n  Shortcuts');
+            const printHelp = (text, msg) =>
+                `  \x1b[90mpress \x1b[0;1m${text} + enter \x1b[0;90mto ${msg}\x1b[0m`;
+            [
+                { text: 'r', msg: 'restart the server' },
+                { text: 'u', msg: 'show server url' },
+                { text: 'o', msg: 'open in browser' },
+                { text: 'c', msg: 'clear the console' },
+                { text: 'q', msg: 'quit' },
+            ].forEach((el) => {
+                console.log(printHelp(el.text, el.msg));
+            });
+            break;
+        default:
+            /* try {
+                console.log(eval(cmd));
+            } catch (error) {
+                console.log(`\x1b[31;1m${error}\x1b[0m`);
+            } */
+            console.log(`Unrecognized command: "${cmd}". Type "h" for help.`);
+    }
+
+    rl.prompt();
+});
+
+// 4) Handle Ctrl+C (SIGINT) in your readline interface:
+rl.on('SIGINT', () => {
+    console.log('\n> Caught SIGINT (Ctrl+C). Exiting.');
+    process.exit(0);
 });
