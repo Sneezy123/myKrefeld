@@ -37,7 +37,6 @@ function DialogOverlay({ className, ...props }) {
 
 function DialogContent({ className, children, ...props }) {
     const childrenArray = Children.toArray(children);
-    console.log(childrenArray);
     const scrollableContent = childrenArray.filter(
         (child) => child.type !== DialogDrawerFooter
     );
