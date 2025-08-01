@@ -11,6 +11,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         {/* <CookiesProvider> */}
+        {document.body.classList.add('dark')}
         <BrowserRouter>
             <Analytics />
             <SpeedInsights />

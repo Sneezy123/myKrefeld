@@ -1,194 +1,237 @@
-import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { ScrollArea } from '@radix-ui/react-scroll-area';
+    DialogDrawer,
+    DialogDrawerContent,
+    DialogDrawerDescription,
+    DialogDrawerFooter,
+    DialogDrawerHeader,
+    DialogDrawerTitle,
+    DialogDrawerTrigger,
+} from '@/components/ui/dialogdrawer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
+import { ExternalLink, MapPin, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export default function EventCard({
     event,
+    open,
+    onOpenChange,
     isLoading,
     distanceToMe,
+    onCardClick,
     ...props
 }) {
-    const location = useLocation();
-    const navigate = useNavigate();
+    const [isFavorite, setFavorite] = useState(false);
 
-    const closeDialog = () => {
-        setIsOpen(false);
-        navigate('/discover');
-    };
-
-    let isSkeleton = isLoading;
+    if (isLoading || !event)
+        return (
+            <SkeletonCard
+                style={{
+                    width: '100%',
+                    height: '100%',
+                }}
+            />
+        );
 
     return (
-        <>
-            {!isSkeleton ?
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Link
-                            key={event?.id}
-                            to={`/discover?event-id=${event?.id}`}
-                        >
-                            <Card className='w-full h-[560px] transition-shadow flex flex-col cursor-pointer'>
-                                {/* Front of the Card */}
-                                {/* Main content area - takes all available space but shrinks as needed */}
-                                <CardHeader>
-                                    {event.image?.url !== '' ?
-                                        <img
-                                            src={event.image?.url}
-                                            alt={event.title}
-                                            className='rounded-xl mb-4 w-full h-40 object-cover'
-                                        />
-                                    :   <div className='rounded-xl mb-4 w-full h-40 object-cover bg-stone-100'></div>
-                                    }
-                                    {/* Event Title */}
-                                    <CardTitle
-                                        className='font-stretch-semi-expanded font-semibold mb-2 text-xl overflow-x-scroll scrollbar-hidden'
-                                        dangerouslySetInnerHTML={{
-                                            __html: DOMPurify.sanitize(
-                                                event.title
-                                            ),
-                                        }}
-                                    ></CardTitle>
-                                    <TimeIndicator
-                                        eventStart={new Date(
-                                            event.start_date
-                                        ).getTime()}
-                                        eventEnd={new Date(
-                                            event.end_date
-                                        ).getTime()}
-                                    />
-                                </CardHeader>
-                                {/* Event Details */}
-                                <CardContent>
-                                    <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-2'>
-                                        <strong>Beginn:</strong>{' '}
-                                        {new Date(
-                                            event.start_date
-                                        ).toLocaleString([], {
-                                            year: 'numeric',
-                                            month: '2-digit',
-                                            day: '2-digit',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                        {' Uhr'}
-                                        <br />
-                                        <strong>Ende:</strong>{' '}
-                                        {new Date(
-                                            event.end_date
-                                        ).toLocaleString([], {
-                                            year: 'numeric',
-                                            month: '2-digit',
-                                            day: '2-digit',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                        {' Uhr'}
-                                    </p>
-                                    {/* Venue */}
-                                    {event.venue?.venue === '' ?
-                                        <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                            <strong>Veranstaltungsort:</strong>{' '}
-                                            k.A.
-                                        </p>
-                                    :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                            <strong>Veranstaltungsort:</strong>{' '}
-                                            {event.venue?.venue}:{' '}
-                                            <span className='font-light'>
-                                                {event.venue?.address},{' '}
-                                                {event.venue?.zip}{' '}
-                                                {event.venue?.city}
-                                            </span>
-                                        </p>
-                                    }
-                                    {event.cost === '' ?
-                                        <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                            <strong>Preis:</strong> k.A.
-                                        </p>
-                                    :   <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                            <strong>Preis:</strong>{' '}
-                                            {(
-                                                [
-                                                    '0',
-                                                    '0€',
-                                                    'frei',
-                                                    'free',
-                                                    'gratis',
-                                                    'kostenlos',
-                                                ].includes(
-                                                    event.cost
-                                                        ?.toString()
-                                                        .toLowerCase()
-                                                )
-                                            ) ?
-                                                'Kostenlos'
-                                            :   `${
-                                                    parseFloat(
-                                                        event.cost
-                                                            ?.toString()
-                                                            .match(
-                                                                /\d+([\.,]\d+)?/
-                                                            )
-                                                    ).toLocaleString('de-DE', {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2,
-                                                    }) ?? 'null'
-                                                } €`
-                                            }
-                                        </p>
-                                    }
-                                    {typeof distanceToMe === 'number' &&
-                                        distanceToMe !== Infinity &&
-                                        distanceToMe !== 0 && (
-                                            <p className='font-stretch-semi-expanded text-sm text-gray-600 mb-4'>
-                                                <strong>Abstand:</strong>{' '}
-                                                {formatDistance(distanceToMe)}
-                                            </p>
-                                        )}
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle
-                                dangerouslySetInnerHTML={{
-                                    __html: DOMPurify.sanitize(event.title),
-                                }}
-                            ></DialogTitle>
-                            <DialogDescription>
-                                {event.sourceURL} &emsp; {event.id}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div
+        <DialogDrawer open={open} onOpenChange={onOpenChange}>
+            <DialogDrawerTrigger asChild>
+                <Card className='w-full h-[560px] transition-all flex flex-col cursor-pointer hover:border-accent-400 duration-300'>
+                    {/* Front of the Card */}
+                    {/* Main content area - takes all available space but shrinks as needed */}
+                    <CardHeader>
+                        {event.image?.url !== '' ?
+                            <img
+                                src={event.image?.url}
+                                alt={event.title}
+                                className='rounded-xl mb-4 w-full h-40 object-cover'
+                            />
+                        :   <div className='rounded-xl mb-4 w-full h-40 object-cover bg-gray-100 dark:bg-[#1d1d20]'></div>
+                        }
+                        {/* Event Title */}
+                        <CardTitle
+                            className='font-stretch-semi-expanded font-semibold mb-2 text-xl overflow-x-scroll scrollbar-hidden font-sans'
                             dangerouslySetInnerHTML={{
-                                __html: DOMPurify.sanitize(event.description),
+                                __html: DOMPurify.sanitize(event.title),
                             }}
-                        ></div>
-                        Hello
-                    </DialogContent>
-                </Dialog>
-            :   <SkeletonCard />}
-        </>
+                        ></CardTitle>
+                        <TimeIndicator
+                            eventStart={new Date(event.start_date).getTime()}
+                            eventEnd={new Date(event.end_date).getTime()}
+                        />
+                    </CardHeader>
+                    {/* Event Details */}
+                    <CardContent>
+                        <p className='font-stretch-semi-expanded text-sm text-text-900  mb-2'>
+                            <strong>Beginn:</strong>{' '}
+                            {new Date(event.start_date).toLocaleString([], {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                            })}
+                            {' Uhr'}
+                            <br />
+                            <strong>Ende:</strong>{' '}
+                            {new Date(event.end_date).toLocaleString([], {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                            })}
+                            {' Uhr'}
+                        </p>
+                        {/* Venue */}
+                        {event.venue?.venue === '' ?
+                            <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
+                                <strong>Veranstaltungsort:</strong> k.A.
+                            </p>
+                        :   <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
+                                <strong>Veranstaltungsort:</strong>{' '}
+                                {event.venue?.venue}:{' '}
+                                <span className='font-light'>
+                                    {event.venue?.address}, {event.venue?.zip}{' '}
+                                    {event.venue?.city}
+                                </span>
+                            </p>
+                        }
+                        {event.cost === '' ?
+                            <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
+                                <strong>Preis:</strong> k.A.
+                            </p>
+                        :   <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
+                                <strong>Preis:</strong>{' '}
+                                {(
+                                    [
+                                        '0',
+                                        '0€',
+                                        'frei',
+                                        'free',
+                                        'gratis',
+                                        'kostenlos',
+                                    ].includes(
+                                        event.cost?.toString().toLowerCase()
+                                    )
+                                ) ?
+                                    'Kostenlos'
+                                :   `${
+                                        parseFloat(
+                                            event.cost
+                                                ?.toString()
+                                                .match(/\d+([\.,]\d+)?/)
+                                        ).toLocaleString('de-DE', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        }) ?? 'null'
+                                    } €`
+                                }
+                            </p>
+                        }
+                        {typeof distanceToMe === 'number' &&
+                            distanceToMe !== Infinity &&
+                            distanceToMe !== 0 && (
+                                <p className='font-stretch-semi-expanded text-sm text-text-900 mb-4'>
+                                    <strong>Abstand:</strong>{' '}
+                                    {formatDistance(distanceToMe)}
+                                </p>
+                            )}
+                    </CardContent>
+                </Card>
+            </DialogDrawerTrigger>
+            <DialogDrawerContent>
+                <DialogDrawerHeader>
+                    <DialogDrawerTitle
+                        dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(event.title),
+                        }}
+                    ></DialogDrawerTitle>
+                    <DialogDrawerDescription>
+                        {event.sourceURL} &emsp; {event.id}
+                    </DialogDrawerDescription>
+                </DialogDrawerHeader>
+                <div
+                    className='mt-3'
+                    dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(event.description),
+                    }}
+                ></div>
+                <DialogDrawerFooter>
+                    <Button
+                        variant={'default'}
+                        className={'col-start-1 col-end-3'}
+                    >
+                        <MapPin />
+                        Auf der Karte anzeigen
+                    </Button>
+                    <Button
+                        variant={'outline'}
+                        onClick={() => setFavorite(!isFavorite)}
+                    >
+                        <Star
+                            className={`${isFavorite ? 'fill-text-950' : ''} transition-all duration-500`}
+                        />
+                    </Button>
+                    <Button variant={'outline'} asChild>
+                        <Link
+                            to={
+                                event.website !== '' ?
+                                    event.website.replace(
+                                        /^(?!https?:\/\/|\/\/)(www\.)?/,
+                                        'https://$1'
+                                    )
+                                : event.venue?.website !== '' ?
+                                    event.venue?.website
+                                :   event.url
+                            }
+                            target='_blank'
+                            rel='noopener noreferrer'
+                        >
+                            <ExternalLink />
+                        </Link>
+                    </Button>
+                </DialogDrawerFooter>
+            </DialogDrawerContent>
+        </DialogDrawer>
     );
+}
+
+function SkeletonCard() {
+    return (
+        <Card
+            className={
+                'w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'
+            }
+        >
+            <CardHeader>
+                <Skeleton className='rounded-xl mb-5.5 w-full h-40 '></Skeleton>
+                <div>
+                    <Skeleton className='mb-3 w-full h-4'></Skeleton>
+                    <Skeleton className='mb-13.5 w-3/7 h-4'></Skeleton>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <Skeleton className='mb-2 w-1/2 h-3'></Skeleton>
+                <Skeleton className='mb-4 w-2/5 h-3'></Skeleton>
+                <div>
+                    <Skeleton className='mb-6 w-full h-3'></Skeleton>
+                </div>
+                <Skeleton className='mb-5 w-1/5 h-3'></Skeleton>
+            </CardContent>
+        </Card>
+    );
+}
+
+function formatDistance(distanceInMeters) {
+    if (distanceInMeters < 1000) {
+        return `${Math.round(distanceInMeters).toLocaleString('de-DE')} m`;
+    } else {
+        return `${(Math.round(distanceInMeters / 100) / 10).toLocaleString('de-DE')} km`;
+    }
 }
 
 // This component visually indicates whether an event is currently active based on its start and end times.
@@ -259,7 +302,7 @@ function TimeIndicator({ eventStart, eventEnd }) {
                         title='Diese Veranstaltung ist zuende.'
                     ></span>
                 </span>
-                <p className='font-stretch-semi-expanded text-sm text-gray-600'>
+                <p className='font-stretch-semi-expanded text-sm text-text-900'>
                     {textContent}
                 </p>
             </div>
@@ -323,44 +366,5 @@ function getTimeUntilString(now, date) {
             `${secondsRounded} ${secondsRounded === 1 ? 'Sekunde' : 'Sekunden'}`,
             500,
         ];
-    }
-}
-function SkeletonCard() {
-    return (
-        <Card
-            className={
-                'w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'
-            }
-        >
-            <CardHeader>
-                {/* Image */}
-                <Skeleton className='rounded-xl mb-5.5 w-full h-40 '></Skeleton>{' '}
-                {/* Title */}
-                <div>
-                    <Skeleton className='mb-3 w-full h-4'></Skeleton>
-                    <Skeleton className='mb-13.5 w-3/7 h-4'></Skeleton>
-                </div>
-            </CardHeader>
-            <CardContent>
-                {/* Start */}
-                <Skeleton className='mb-2 w-1/2 h-3'></Skeleton>
-                {/* End */}
-                <Skeleton className='mb-4 w-2/5 h-3'></Skeleton>
-                {/* Venue */}
-                <div>
-                    <Skeleton className='mb-6 w-full h-3'></Skeleton>
-                </div>
-                {/* Cost */}
-                <Skeleton className='mb-5 w-1/5 h-3'></Skeleton>
-            </CardContent>
-        </Card>
-    );
-}
-
-function formatDistance(distanceInMeters) {
-    if (distanceInMeters < 1000) {
-        return `${Math.round(distanceInMeters).toLocaleString('de-DE')} m`;
-    } else {
-        return `${(Math.round(distanceInMeters / 100) / 10).toLocaleString('de-DE')} km`; // Round to one digit
     }
 }

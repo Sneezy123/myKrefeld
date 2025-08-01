@@ -3,9 +3,8 @@ import MapPage from '../pages/map/MapPage.jsx';
 import Discover from '../pages/discover/Discover.jsx';
 import AppSidebar from '../components/AppSidebar.jsx';
 import { Routes, Route } from 'react-router-dom';
-import { Outlet, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Map, Telescope } from 'lucide-react';
 
 import {
     SidebarInset,
@@ -57,12 +56,12 @@ export default function App() {
             />
 
             <SidebarProvider /* defaultOpen={defaultOpen} */>
-                <SidebarInset className=''>
+                <SidebarInset>
                     <Routes>
                         <Route path='/' element={<AppSidebar />}>
                             <Route
                                 index
-                                element={<Discover events={events} />}
+                                element={<MapPage events={events} />}
                             />
                             <Route
                                 path='map'
@@ -83,16 +82,17 @@ export default function App() {
 
 function NoPage() {
     return (
-        <div className='flex flex-col justify-center items-center w-dvw h-dvh'>
-            <h1 className='text-9xl font-stretch-semi-expanded'>404</h1>
-            <h2 className='text-5xl font-stretch-semi-expanded'>
-                Diese Seite wurde nicht gefunden
-            </h2>
-            <p className='text-2xl font-stretch-semi-expanded'>
-                Zurück zur Startseite?{' '}
-                <Link to='/' className='underline text-accent-400'>
-                    Hier
+        <div className='flex flex-col justify-center items-center w-dvw h-dvh font-sans'>
+            <h1 className='text-9xl font-bold m-5'>404</h1>
+            <h2 className='text-3xl '>Wir haben nichts gefunden.</h2>
+            <p className='text-2xl w-1/2 text-center mt-3'>
+                Wir haben überall nachgeschaut, doch es scheint, als ob diese
+                Seite nicht existiert. Willst du zurück zur Startseite? Dann
+                klicke auf den Link{' '}
+                <Link to='/' className='underline text-accent-600'>
+                    hier
                 </Link>
+                .
             </p>
         </div>
     );
