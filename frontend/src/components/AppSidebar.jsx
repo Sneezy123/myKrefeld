@@ -20,10 +20,14 @@ import {
     SidebarHeader,
     SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/darkmodeswitch';
 import { Label } from '@/components/ui/label';
+import { useState } from 'react';
 
 export default function AppSidebar() {
+    const [switchState, setSwitchState] = useState(
+        document.body.classList.contains('dark')
+    );
     const items = [
         {
             title: 'Karte',
@@ -34,21 +38,6 @@ export default function AppSidebar() {
             title: 'Entdecken',
             url: '/discover',
             icon: Telescope,
-        },
-        {
-            title: 'Calendar',
-            url: '#',
-            icon: Calendar,
-        },
-        {
-            title: 'Search',
-            url: '#',
-            icon: Search,
-        },
-        {
-            title: 'Settings',
-            url: '#',
-            icon: Settings,
         },
     ];
 
@@ -139,12 +128,16 @@ export default function AppSidebar() {
                         myKrefeld
                     </span>
                     <Switch
-                        onCheckedChange={(e) =>
-                            document.body.classList.contains('dark') ?
-                                document.body.classList.remove('dark')
-                            :   document.body.classList.add('dark')
-                        }
-                        defaultChecked={true} // Change to false if light mode is default
+                        onCheckedChange={(e) => {
+                            if (document.body.classList.contains('dark')) {
+                                document.body.classList.remove('dark');
+                                setSwitchState(false);
+                            } else {
+                                document.body.classList.add('dark');
+                                setSwitchState(true);
+                            }
+                        }}
+                        defaultChecked={switchState}
                     />
                 </SidebarHeader>
                 <SidebarContent>

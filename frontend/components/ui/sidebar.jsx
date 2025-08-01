@@ -254,7 +254,7 @@ function SidebarTrigger({ className, onClick, ...props }) {
             variant='ghost'
             size='icon'
             className={cn(
-                'size-7 text-text-50 bg-background-950 border-card/40 border-2',
+                'size-7 bg-background-50 text-sidebar-foreground',
                 className
             )}
             onClick={(event) => {
