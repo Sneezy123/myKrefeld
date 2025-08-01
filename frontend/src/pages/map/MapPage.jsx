@@ -158,7 +158,6 @@ export default function MapPage({ events }) {
 
         // The single, unified cleanup function
         return () => {
-            console.log('Cleaning up map resources...');
             const mapInstance = mapRef.current;
             if (mapInstance) {
                 // The cleanup order is now guaranteed to be correct.
