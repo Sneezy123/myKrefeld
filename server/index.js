@@ -111,6 +111,7 @@ async function getKrefeldEventList() {
 
         const totalPages = first.total_pages;
         const totalResults = first.total;
+
         let times = [];
         const startTime = Date.now();
 
@@ -232,42 +233,47 @@ async function getEventimEventList() {
                 `${urlBaseEventim}?language=de&city_names=Krefeld&sort=DateAsc&top=50&page=${page}`
             );
             for (const product of data.products) {
+                let t1 = Date.now();
                 const addr = [
                     product.typeAttributes.liveEntertainment.location.name ||
                         '',
                     'Germany',
                 ]
                     .filter(Boolean)
-                    .join(', ')
-                    .trim()
-                    .toLowerCase();
-                allAddrs.push(addr);
-                allProducts.push(product);
-            }
-        }
-        // Deduplicate
-        allAddrs = [...new Set(allAddrs)];
-        // 2. Geocode in parallel (after DB preload)
-        await geocodeAddresses(allAddrs, 5);
-        // 3. Build eventList
-        let productIdx = 1;
-        for (const product of allProducts) {
-            let t1 = Date.now();
-            const addr = [
-                product.typeAttributes.liveEntertainment.location.name || '',
-                'Germany',
-            ]
-                .filter(Boolean)
-                .join(', ')
-                .trim()
-                .toLowerCase();
-            let geo = geoCache.get(addr) || {};
-            let geoDisplayNameObj = {};
-            const startDateDate = new Date(
-                product.typeAttributes.liveEntertainment.startDate
-            );
-            // Only push if product has an id
-            if (product.productId) {
+                    .join(', ');
+                const geo =
+                    (
+                        await axios.get(
+                            `https://nominatim.openstreetmap.org/search`,
+                            {
+                                params: {
+                                    q: addr,
+                                    'accept-language': 'de',
+                                    countrycodes: 'de',
+                                    format: 'json',
+                                },
+                            }
+                        )
+                    ).data[0] || {};
+
+                const startDateDate = new Date(
+                    product.typeAttributes.liveEntertainment.startDate
+                );
+                const geoDisplayName =
+                    geo.display_name?.toString().split(', ') || '';
+                const geoDisplayNameObj = {
+                    name: geoDisplayName[0] || '',
+                    houseNumber: geoDisplayName[1] || '',
+                    streetName: geoDisplayName[2] || '',
+                    cityDistrict: geoDisplayName[3] || '',
+                    cityPart: geoDisplayName[4] || '',
+                    cityName: geoDisplayName[5] || '',
+                    region: geoDisplayName[6] || '',
+                    state: geoDisplayName[geoDisplayName.length - 3] || '',
+                    postCode: geoDisplayName[geoDisplayName.length - 2] || '',
+                    country: geoDisplayName[geoDisplayName.length - 1] || '',
+                };
+
                 eventList.push({
                     id: product.productId,
                     title: product.name,
