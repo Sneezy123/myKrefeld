@@ -18,32 +18,7 @@ import DebouncedAutoSizer from '@/src/pages/discover/DebouncedAutoSizer.jsx';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-
-function SkeletonCard() {
-    return (
-        <Card
-            className={
-                'w-full h-full shadow-md hover:shadow-lg transition-shadow flex flex-col cursor-pointer'
-            }
-        >
-            <CardHeader>
-                <Skeleton className='rounded-xl mb-5.5 w-full h-40 '></Skeleton>
-                <div>
-                    <Skeleton className='mb-3 w-full h-4'></Skeleton>
-                    <Skeleton className='mb-13.5 w-3/7 h-4'></Skeleton>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <Skeleton className='mb-2 w-1/2 h-3'></Skeleton>
-                <Skeleton className='mb-4 w-2/5 h-3'></Skeleton>
-                <div>
-                    <Skeleton className='mb-6 w-full h-3'></Skeleton>
-                </div>
-                <Skeleton className='mb-5 w-1/5 h-3'></Skeleton>
-            </CardContent>
-        </Card>
-    );
-}
+import { Input } from '@/components/ui/input';
 
 function FilterCard({ symbol, text, id, isActive, filterEvents }) {
     const LucideSymbolIcon = symbol;
@@ -432,21 +407,24 @@ export default function DiscoverEvents({ events }) {
                     Krefeld und Umgebung
                 </h2>
 
-                <ScrollArea className='py-3 mx-10 lg:mx-15 gap-x-2 my-2 max-w-full'>
-                    <div className='flex flex-row w-max'>
-                        {filterTexts.map((text, index) => (
-                            <FilterCard
-                                key={index}
-                                symbol={filterSymbols[index]}
-                                text={text}
-                                id={index}
-                                isActive={activeFilter === index}
-                                filterEvents={filterEvents}
-                            />
-                        ))}
-                    </div>
-                    <ScrollBar orientation='horizontal' />
-                </ScrollArea>
+                <div className='flex flex-row items-center flex-wrap'>
+                    <ScrollArea className='py-3 mx-10 lg:mx-15 gap-x-2 my-2 max-w-full flex'>
+                        <div className='flex flex-row w-max'>
+                            {filterTexts.map((text, index) => (
+                                <FilterCard
+                                    key={index}
+                                    symbol={filterSymbols[index]}
+                                    text={text}
+                                    id={index}
+                                    isActive={activeFilter === index}
+                                    filterEvents={filterEvents}
+                                />
+                            ))}
+                            <ScrollBar orientation='horizontal' />
+                        </div>
+                    </ScrollArea>
+                    <Input className='mx-10 lg:mx-15 p-5 min-w-60 max-w-100' />
+                </div>
             </div>
             {events[0] === -1 ?
                 <div className='flex flex-col w-full grow my-5'>
